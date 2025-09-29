@@ -1,0 +1,14 @@
+/Users/jingxian/Dropbox/qut/courses/data_science/ifn584/ifn584ex/a2/lineup_a2/bin/Debug/net8.0/lineup_a2
+/Users/jingxian/Dropbox/qut/courses/data_science/ifn584/ifn584ex/a2/lineup_a2/bin/Debug/net8.0/lineup_a2.deps.json
+/Users/jingxian/Dropbox/qut/courses/data_science/ifn584/ifn584ex/a2/lineup_a2/bin/Debug/net8.0/lineup_a2.runtimeconfig.json
+/Users/jingxian/Dropbox/qut/courses/data_science/ifn584/ifn584ex/a2/lineup_a2/bin/Debug/net8.0/lineup_a2.dll
+/Users/jingxian/Dropbox/qut/courses/data_science/ifn584/ifn584ex/a2/lineup_a2/bin/Debug/net8.0/lineup_a2.pdb
+/Users/jingxian/Dropbox/qut/courses/data_science/ifn584/ifn584ex/a2/lineup_a2/obj/Debug/net8.0/lineup_a2.GeneratedMSBuildEditorConfig.editorconfig
+/Users/jingxian/Dropbox/qut/courses/data_science/ifn584/ifn584ex/a2/lineup_a2/obj/Debug/net8.0/lineup_a2.AssemblyInfoInputs.cache
+/Users/jingxian/Dropbox/qut/courses/data_science/ifn584/ifn584ex/a2/lineup_a2/obj/Debug/net8.0/lineup_a2.AssemblyInfo.cs
+/Users/jingxian/Dropbox/qut/courses/data_science/ifn584/ifn584ex/a2/lineup_a2/obj/Debug/net8.0/lineup_a2.csproj.CoreCompileInputs.cache
+/Users/jingxian/Dropbox/qut/courses/data_science/ifn584/ifn584ex/a2/lineup_a2/obj/Debug/net8.0/lineup_a2.dll
+/Users/jingxian/Dropbox/qut/courses/data_science/ifn584/ifn584ex/a2/lineup_a2/obj/Debug/net8.0/refint/lineup_a2.dll
+/Users/jingxian/Dropbox/qut/courses/data_science/ifn584/ifn584ex/a2/lineup_a2/obj/Debug/net8.0/lineup_a2.pdb
+/Users/jingxian/Dropbox/qut/courses/data_science/ifn584/ifn584ex/a2/lineup_a2/obj/Debug/net8.0/lineup_a2.genruntimeconfig.cache
+/Users/jingxian/Dropbox/qut/courses/data_science/ifn584/ifn584ex/a2/lineup_a2/obj/Debug/net8.0/ref/lineup_a2.dll
