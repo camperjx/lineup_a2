@@ -192,31 +192,32 @@ namespace LineUpGame
 
         private void ApplyMagnetEffect(int row, int col, Disc disc)
         {
-            // ✅ 初始落下已在 DropDisc 中处理 ShowFrame("Initial placement")
+            // DropDisc proceeds ShowFrame("Initial placement")
 
-            // ✅ 激活帧
+            // effect starts
             ShowFrame("Effect activated (Magnet)");
 
             char ownerOrd = char.IsUpper(disc.Symbol) ? '@' : '#';
 
-            // 从下方搜索同阵营最近的普通棋子
+            // Search the discs around
             int target = -1;
             for (int r = row + 1; r < Rows; r++)
             {
                 if (grid[r, col] == ownerOrd) { target = r; break; }
             }
 
-            // 如果找到并且不是紧邻，则上提一格
+            // If there is none nearby, move upward one row
             if (target != -1 && target > row + 1)
             {
                 grid[target - 1, col] = ownerOrd;
                 grid[target, col] = ' ';
             }
 
-            // 磁铁自身变成普通棋子
+            
+            // Magnet become ordinary
             grid[row, col] = ownerOrd;
 
-            // 最终帧
+            // Final state
             ShowFrame("Final state (Magnet)");
         }
     

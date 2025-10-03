@@ -117,9 +117,6 @@ namespace LineUpGame
             return false;
         }
 
-        /// <summary>
-        /// Help 菜单：显示所有命令并暂停，等待用户确认
-        /// </summary>
         protected void ShowHelp()
         {
             Console.WriteLine();
@@ -135,7 +132,7 @@ namespace LineUpGame
             Console.WriteLine("  help             Show this help menu");
             Console.WriteLine("=================");
             Console.WriteLine("Press Enter to continue...");
-            Console.ReadLine(); // 等待用户按 Enter
+            Console.ReadLine();
         }
 
         protected void TurnLoop(bool onlyOrdinary, bool doSpin = false)
@@ -148,68 +145,80 @@ namespace LineUpGame
                 Console.WriteLine($"Inv P1(O/B/M/E): {p1.Inventory["ordinary"]}/{p1.Inventory["boring"]}/{p1.Inventory["magnet"]}/{p1.Inventory["explode"]} | " +
                                   $"P2: {p2.Inventory["ordinary"]}/{p2.Inventory["boring"]}/{p2.Inventory["magnet"]}/{p2.Inventory["explode"]}");
 
-                Console.Write($"{current.Name} ({current.Symbol}): enter command: ");
-                string? line = Console.ReadLine()?.Trim();
-                if (string.IsNullOrWhiteSpace(line)) continue;
-
-                // 🔧 无论谁回合，都优先处理 help
-                if (line.Equals("help", StringComparison.OrdinalIgnoreCase))
-                {
-                    ShowHelp();
-                    continue;
-                }
-
-                if (line.Equals("undo", StringComparison.OrdinalIgnoreCase))
-                {
-                    if (undoStack.Count > 0)
-                    {
-                        var prev = undoStack.Pop();
-                        redoStack.Push(CaptureCurrentState());
-                        RestoreState(prev);
-                        Console.WriteLine("Undo successful.");
-                    }
-                    else Console.WriteLine("No moves to undo.");
-                    continue;
-                }
-                if (line.Equals("redo", StringComparison.OrdinalIgnoreCase))
-                {
-                    if (redoStack.Count > 0)
-                    {
-                        var next = redoStack.Pop();
-                        undoStack.Push(CaptureCurrentState());
-                        RestoreState(next);
-                        Console.WriteLine("Redo successful.");
-                    }
-                    else Console.WriteLine("No moves to redo.");
-                    continue;
-                }
-                if (line.StartsWith("save", StringComparison.OrdinalIgnoreCase))
-                {
-                    string[] ps = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                    string file = ps.Length > 1 ? ps[1] : "savegame.txt";
-                    Save(file);
-                    continue;
-                }
-                if (line.StartsWith("load", StringComparison.OrdinalIgnoreCase))
-                {
-                    string[] ps = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                    string file = ps.Length > 1 ? ps[1] : "savegame.txt";
-                    if (Load(file)) Console.WriteLine("Game loaded.");
-                    continue;
-                }
-
+                // ✅ FIX: Check if current player is AI BEFORE prompting for input
                 if (current is AIPlayer ai)
                 {
-                    Console.WriteLine("Computer is thinking...");
+                    Console.WriteLine($"{current.Name} is thinking...");
+                    System.Threading.Thread.Sleep(800); // Brief pause for better UX
                     SaveState();
                     ai.MakeMove(board);
                 }
                 else
                 {
+                    // Human player - prompt for input
+                    Console.Write($"{current.Name} ({current.Symbol}): enter command: ");
+                    string? line = Console.ReadLine()?.Trim();
+                    if (string.IsNullOrWhiteSpace(line)) continue;
+
+                    // Handle 'help' command
+                    if (line.Equals("help", StringComparison.OrdinalIgnoreCase))
+                    {
+                        ShowHelp();
+                        continue;
+                    }
+
+                    // Handle undo
+                    if (line.Equals("undo", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (undoStack.Count > 0)
+                        {
+                            var prev = undoStack.Pop();
+                            redoStack.Push(CaptureCurrentState());
+                            RestoreState(prev);
+                            Console.WriteLine("Undo successful.");
+                        }
+                        else Console.WriteLine("No moves to undo.");
+                        continue;
+                    }
+
+                    // Handle redo
+                    if (line.Equals("redo", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (redoStack.Count > 0)
+                        {
+                            var next = redoStack.Pop();
+                            undoStack.Push(CaptureCurrentState());
+                            RestoreState(next);
+                            Console.WriteLine("Redo successful.");
+                        }
+                        else Console.WriteLine("No moves to redo.");
+                        continue;
+                    }
+
+                    // Handle save
+                    if (line.StartsWith("save", StringComparison.OrdinalIgnoreCase))
+                    {
+                        string[] ps = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                        string file = ps.Length > 1 ? ps[1] : "savegame.txt";
+                        Save(file);
+                        continue;
+                    }
+
+                    // Handle load
+                    if (line.StartsWith("load", StringComparison.OrdinalIgnoreCase))
+                    {
+                        string[] ps = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                        string file = ps.Length > 1 ? ps[1] : "savegame.txt";
+                        if (Load(file)) Console.WriteLine("Game loaded.");
+                        continue;
+                    }
+
+                    // Try to execute the move
                     bool moved = ExecuteHumanCommand(line, onlyOrdinary);
                     if (!moved) continue;
                 }
 
+                // Check for win after move
                 if (board.CheckWin(current.Symbol, winCondition))
                 {
                     board.Display();
@@ -217,6 +226,7 @@ namespace LineUpGame
                     return;
                 }
 
+                // Handle board rotation for Spin mode
                 turnCount++;
                 if (doSpin && turnCount % 5 == 0)
                 {
@@ -225,8 +235,10 @@ namespace LineUpGame
                     board.ApplyGravity();
                 }
 
+                // Switch to other player
                 current = (current == p1) ? p2 : p1;
             }
+
             board.Display();
             Console.WriteLine("Board full. It's a tie.");
         }

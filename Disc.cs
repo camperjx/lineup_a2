@@ -26,17 +26,17 @@ namespace LineUpGame
 
         public override void Apply(Board board, int r, int c)
         {
-            // 初始落下
+            // 1. Initially drop on the board
             board.ShowFrame("Initial placement (Boring)");
 
-            // 激活效果
+            // 2. Activate effect
             board.ShowFrame("Effect activated (Boring)");
 
             var returned = board.ClearColumnAndReturn(c);
             foreach (var ch in returned) GameRegistry.ReturnToOwner(ch);
             board.SetCell(board.Rows - 1, c, OwnerOrdinary);
 
-            // 最终状态
+            // 3. Final state
             board.ShowFrame("Final state (Boring)");
         }
     }
@@ -48,10 +48,10 @@ namespace LineUpGame
 
         public override void Apply(Board board, int r, int c)
         {
-            // 初始落下
+            // 1. Initially drop on the board
             board.ShowFrame("Initial placement (Magnet)");
 
-            // 激活效果
+            // 2. Activate effect
             board.ShowFrame("Effect activated (Magnet)");
 
             int target = -1;
@@ -73,7 +73,7 @@ namespace LineUpGame
 
             board.SetCell(r, c, OwnerOrdinary);
 
-            // 最终状态
+            // 3. Final state
             board.ShowFrame("Final state (Magnet)");
         }
     }
@@ -85,10 +85,10 @@ namespace LineUpGame
 
         public override void Apply(Board board, int r, int c)
         {
-            // 初始落下
+            // 1. Initially drop on the board
             board.ShowFrame("Initial placement (Exploding)");
 
-            // 激活效果
+            // 2. Activate effect
             board.ShowFrame("Effect activated (Exploding)");
 
             for (int dr = -1; dr <= 1; dr++)
@@ -100,7 +100,7 @@ namespace LineUpGame
                 }
             board.ApplyGravity();
 
-            // 最终状态
+            // 3. Final state
             board.ShowFrame("Final state (Exploding)");
         }
     }
