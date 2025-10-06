@@ -32,6 +32,39 @@ namespace LineUpGame
         private Stack<GameState> undoStack = new();
         private Stack<GameState> redoStack = new();
 
+        protected Board board = null!;
+        protected Player p1 = null!;
+        protected Player p2 = null!;
+        protected Player current = null!;
+        protected int winCondition;
+        protected string playMode = "HvH";
+        protected int turnCount = 0;
+
+        // ═══════════════════════════════════════════════════════════
+        // TEMPLATE METHOD - Defines the algorithm structure
+        // ═══════════════════════════════════════════════════════════
+        public void Run()
+        {
+            SetupPlayers();
+            ConfigureBoard();
+            ConfigureInventory();
+            ConfigureRules();
+            TurnLoop(UseOnlyOrdinary(), EnableSpin());
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        // TEMPLATE HOOKS - To be implemented by subclasses
+        // ═══════════════════════════════════════════════════════════
+        protected abstract void ConfigureBoard();
+        protected abstract void ConfigureInventory();
+        protected abstract void ConfigureRules();
+        protected abstract bool UseOnlyOrdinary();
+        protected abstract bool EnableSpin();
+
+        // ═══════════════════════════════════════════════════════════
+        // COMMON METHODS - Shared by all game modes
+        // ═══════════════════════════════════════════════════════════
+
         private void SaveState()
         {
             undoStack.Push(CaptureCurrentState());
@@ -58,14 +91,6 @@ namespace LineUpGame
             current = (st.CurrentPlayer == "P1") ? p1 : p2;
             turnCount = st.TurnCount;
         }
-
-        protected Board board = null!;
-        protected Player p1 = null!;
-        protected Player p2 = null!;
-        protected Player current = null!;
-        protected int winCondition;
-        protected string playMode = "HvH";
-        protected int turnCount = 0;
 
         protected void SetupPlayers()
         {
@@ -137,7 +162,7 @@ namespace LineUpGame
 
         protected void TurnLoop(bool onlyOrdinary, bool doSpin = false)
         {
-            int turnCount = 0;
+            turnCount = 0;
             while (!board.IsFull())
             {
                 board.Display();
@@ -145,11 +170,11 @@ namespace LineUpGame
                 Console.WriteLine($"Inv P1(O/B/M/E): {p1.Inventory["ordinary"]}/{p1.Inventory["boring"]}/{p1.Inventory["magnet"]}/{p1.Inventory["explode"]} | " +
                                   $"P2: {p2.Inventory["ordinary"]}/{p2.Inventory["boring"]}/{p2.Inventory["magnet"]}/{p2.Inventory["explode"]}");
 
-                // ✅ FIX: Check if current player is AI BEFORE prompting for input
+                // Check if current player is AI
                 if (current is AIPlayer ai)
                 {
                     Console.WriteLine($"{current.Name} is thinking...");
-                    System.Threading.Thread.Sleep(800); // Brief pause for better UX
+                    System.Threading.Thread.Sleep(800);
                     SaveState();
                     ai.MakeMove(board);
                 }
@@ -243,8 +268,6 @@ namespace LineUpGame
             Console.WriteLine("Board full. It's a tie.");
         }
 
-        public abstract void Run();
-
         public void Save(string filename)
         {
             using var w = new System.IO.StreamWriter(filename);
@@ -306,60 +329,110 @@ namespace LineUpGame
         }
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // CONCRETE GAME IMPLEMENTATIONS
+    // ═══════════════════════════════════════════════════════════
+
     class LineUpClassic : Game
     {
-        public override void Run()
-        {
-            SetupPlayers();
-            Console.Write("Rows (>=6): ");
-            int rows = int.Parse(Console.ReadLine()!);
-            Console.Write("Cols (>=7, cols>=rows): ");
-            int cols = int.Parse(Console.ReadLine()!);
-            board = new Board(rows, cols);
-            winCondition = Math.Max(4, (int)Math.Floor(rows * cols * 0.1));
+        private int rows;
+        private int cols;
 
+        protected override void ConfigureBoard()
+        {
+            Console.Write("Rows (>=6): ");
+            rows = int.Parse(Console.ReadLine()!);
+            Console.Write("Cols (>=7, cols>=rows): ");
+            cols = int.Parse(Console.ReadLine()!);
+            board = new Board(rows, cols);
+        }
+
+        protected override void ConfigureInventory()
+        {
             int totalCells = rows * cols;
             int perPlayer = totalCells / 2;
             int ordinary = Math.Max(0, perPlayer - 6);
             p1.Inventory["ordinary"] = ordinary;
             p2.Inventory["ordinary"] = ordinary;
-            TurnLoop(onlyOrdinary: false);
+            // Special discs (boring, magnet, explode) already set to 2 by ResetDefaultInventory()
         }
+
+        protected override void ConfigureRules()
+        {
+            winCondition = Math.Max(4, (int)Math.Floor(rows * cols * 0.1));
+        }
+
+        protected override bool UseOnlyOrdinary() => false;
+        protected override bool EnableSpin() => false;
     }
 
     class LineUpBasic : Game
     {
-        public override void Run()
+        private const int ROWS = 8;
+        private const int COLS = 9;
+
+        protected override void ConfigureBoard()
         {
-            SetupPlayers();
-            int rows = 8, cols = 9;
-            board = new Board(rows, cols);
-            winCondition = Math.Max(4, (int)Math.Floor(rows * cols * 0.1));
-            int totalCells = rows * cols;
+            board = new Board(ROWS, COLS);
+        }
+
+        protected override void ConfigureInventory()
+        {
+            int totalCells = ROWS * COLS;
             int perPlayer = totalCells / 2;
             p1.Inventory["ordinary"] = perPlayer;
             p2.Inventory["ordinary"] = perPlayer;
-            p1.Inventory["boring"] = p1.Inventory["magnet"] = p1.Inventory["explode"] = 0;
-            p2.Inventory["boring"] = p2.Inventory["magnet"] = p2.Inventory["explode"] = 0;
-            TurnLoop(onlyOrdinary: true);
+            
+            // Disable special discs
+            p1.Inventory["boring"] = 0;
+            p1.Inventory["magnet"] = 0;
+            p1.Inventory["explode"] = 0;
+            p2.Inventory["boring"] = 0;
+            p2.Inventory["magnet"] = 0;
+            p2.Inventory["explode"] = 0;
         }
+
+        protected override void ConfigureRules()
+        {
+            winCondition = Math.Max(4, (int)Math.Floor(ROWS * COLS * 0.1));
+        }
+
+        protected override bool UseOnlyOrdinary() => true;
+        protected override bool EnableSpin() => false;
     }
 
     class LineUpSpin : Game
     {
-        public override void Run()
+        private const int ROWS = 8;
+        private const int COLS = 9;
+
+        protected override void ConfigureBoard()
         {
-            SetupPlayers();
-            int rows = 8, cols = 9;
-            board = new Board(rows, cols);
-            winCondition = Math.Max(4, (int)Math.Floor(rows * cols * 0.1));
-            int totalCells = rows * cols;
+            board = new Board(ROWS, COLS);
+        }
+
+        protected override void ConfigureInventory()
+        {
+            int totalCells = ROWS * COLS;
             int perPlayer = totalCells / 2;
             p1.Inventory["ordinary"] = perPlayer;
             p2.Inventory["ordinary"] = perPlayer;
-            p1.Inventory["boring"] = p1.Inventory["magnet"] = p1.Inventory["explode"] = 0;
-            p2.Inventory["boring"] = p2.Inventory["magnet"] = p2.Inventory["explode"] = 0;
-            TurnLoop(onlyOrdinary: true, doSpin: true);
+            
+            // Disable special discs
+            p1.Inventory["boring"] = 0;
+            p1.Inventory["magnet"] = 0;
+            p1.Inventory["explode"] = 0;
+            p2.Inventory["boring"] = 0;
+            p2.Inventory["magnet"] = 0;
+            p2.Inventory["explode"] = 0;
         }
+
+        protected override void ConfigureRules()
+        {
+            winCondition = Math.Max(4, (int)Math.Floor(ROWS * COLS * 0.1));
+        }
+
+        protected override bool UseOnlyOrdinary() => true;
+        protected override bool EnableSpin() => true;  // Key difference - enables rotation!
     }
 }

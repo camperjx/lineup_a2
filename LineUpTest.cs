@@ -1,29 +1,52 @@
-using System;
-
 namespace LineUpGame
 {
     class LineUpTest : Game
     {
-        public override void Run()
-        {
-            SetupPlayers();
-            int rows = 6, cols = 7;
-            board = new Board(rows, cols);
-            winCondition = 4;
+        private const int ROWS = 6;
+        private const int COLS = 7;
 
-            // ✅ 初始化足够的棋子库存
-            int maxDiscs = rows * cols;
+        protected override void ConfigureBoard()
+        {
+            board = new Board(ROWS, COLS);
+        }
+
+        protected override void ConfigureInventory()
+        {
+            // Unlimited inventory for testing
+            int maxDiscs = ROWS * COLS;
             p1.Inventory["ordinary"] = maxDiscs;
             p2.Inventory["ordinary"] = maxDiscs;
-            p1.Inventory["boring"] = p1.Inventory["magnet"] = p1.Inventory["explode"] = maxDiscs;
-            p2.Inventory["boring"] = p2.Inventory["magnet"] = p2.Inventory["explode"] = maxDiscs;
+            p1.Inventory["boring"] = maxDiscs;
+            p1.Inventory["magnet"] = maxDiscs;
+            p1.Inventory["explode"] = maxDiscs;
+            p2.Inventory["boring"] = maxDiscs;
+            p2.Inventory["magnet"] = maxDiscs;
+            p2.Inventory["explode"] = maxDiscs;
+        }
+
+        protected override void ConfigureRules()
+        {
+            winCondition = 4;
+        }
+
+        protected override bool UseOnlyOrdinary() => false;
+        protected override bool EnableSpin() => false;
+
+        // Override Run() to execute scripted test sequence
+        public new void Run()
+        {
+            SetupPlayers();
+            ConfigureBoard();
+            ConfigureInventory();
+            ConfigureRules();
 
             Console.WriteLine("Enter test sequence (e.g., O4,M5,B2,O6):");
             string? line = Console.ReadLine();
             if (string.IsNullOrWhiteSpace(line)) return;
 
             var moves = line.Split(',', StringSplitOptions.RemoveEmptyEntries);
-            board.Display(); // 初始显示棋盘
+            board.Display(); // Initial board display
+
             foreach (var move in moves)
             {
                 string trimmed = move.Trim();
@@ -32,7 +55,7 @@ namespace LineUpGame
                 char typeChar = char.ToUpper(trimmed[0]);
                 if (!int.TryParse(trimmed.Substring(1), out int col)) continue;
 
-                // ⚠️ 如果你希望用户输入 1-based 列号，这里要 -1
+                // Convert from 1-based to 0-based column index
                 col -= 1;
 
                 string discType = typeChar switch
@@ -66,6 +89,5 @@ namespace LineUpGame
 
             Console.WriteLine("Test sequence complete.");
         }
-
     }
 }
