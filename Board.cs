@@ -213,16 +213,13 @@ namespace LineUpGame
                 grid[target, col] = ' ';
             }
 
-            
             // Magnet become ordinary
             grid[row, col] = ownerOrd;
 
             // Final state
             ShowFrame("Final state (Magnet)");
         }
-    
-
-private void ApplyMagnetEffect(int row, int col, char placedToken)
+        private void ApplyMagnetEffect(int row, int col, char placedToken)
         {
             ShowFrame("Effect activated (Magnet)");
             char ownerOrd = char.IsUpper(placedToken) ? '@' : '#';
@@ -238,6 +235,45 @@ private void ApplyMagnetEffect(int row, int col, char placedToken)
             }
             grid[row, col] = ownerOrd;
             ShowFrame("Final state (Magnet)");
+        }
+        public char[,] ExportGrid()
+        {
+            var copy = new char[Rows, Columns];
+            for (int r = 0; r < Rows; r++)
+                for (int c = 0; c < Columns; c++)
+                    copy[r, c] = grid[r, c];
+            return copy;
+        }
+        public static bool CheckWinOnGrid(char[,] g, int r, int c, int need, char owned)
+        {
+            int rows = g.GetLength(0), cols = g.GetLength(1);
+            int CountDir(int dr, int dc)
+            {
+                int cnt = 0, rr = r + dr, cc = c + dc;
+                while (rr >= 0 && rr < rows && cc >= 0 && cc < cols && g[rr, cc] == owned)
+                { cnt++; rr += dr; cc += dc; }
+                return cnt;
+            }
+            return
+                (1 + CountDir(0, -1) + CountDir(0, +1) >= need) || 
+                (1 + CountDir(-1, 0) + CountDir(+1, 0) >= need) ||  
+                (1 + CountDir(-1, -1) + CountDir(+1, +1) >= need) ||
+                (1 + CountDir(-1, +1) + CountDir(+1, -1) >= need); 
+        }
+        public static bool CanDropOnGrid(char[,] g, int col)
+        {
+            if (g == null) return false;
+            int cols = g.GetLength(1);
+            if (col < 0 || col >= cols) return false;
+            return g[0, col] == ' ';
+        }
+        public static int FindDropRowOnGrid(char[,] g, int col)
+        {
+            int rows = g.GetLength(0);
+            for (int r = rows - 1; r >= 0; r--)
+                if (g[r, col] == ' ')
+                    return r;
+            return -1;
         }
     }
 }
