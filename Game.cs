@@ -159,6 +159,10 @@ namespace LineUpGame
             Console.WriteLine("Press Enter to continue...");
             Console.ReadLine();
         }
+        private char GetOpponentSymbol(Player current)
+        {
+            return current == p1 ? p2.Symbol : p1.Symbol;
+        }
 
         protected void TurnLoop(bool onlyOrdinary, bool doSpin = false)
         {
@@ -173,10 +177,15 @@ namespace LineUpGame
                 // Check if current player is AI
                 if (current is AIPlayer ai)
                 {
-                    Console.WriteLine($"{current.Name} is thinking...");
-                    System.Threading.Thread.Sleep(800);
-                    SaveState();
-                    ai.MakeMove(board);
+                    char[,] grid = board.ExportGrid();
+                    int winN = winCondition;
+                    char opponent = GetOpponentSymbol(current);
+
+                    int col = ai.ChooseColumn(grid, winN, opponent);
+                    if (col >= 0 && board.DropDisc(col, ai.CreateDisc("ordinary")))
+                    {
+                        ai.Consume("ordinary");
+                    }
                 }
                 else
                 {
