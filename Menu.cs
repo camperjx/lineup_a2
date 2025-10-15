@@ -57,11 +57,11 @@ public class HelpMenu : Menu
     Items.Add(new MenuItem("", "In-game commands:"));
     Items.Add(new MenuItem($"{"Default move (ordinary disc)",-32}", "<col> (e.g., 2)"));
     Items.Add(new MenuItem($"{"Standard move",-32}", "o/b/m/e<col> (e.g., b2)"));
-    Items.Add(new MenuItem($"{"Save game",-32}", "s <filename>"));
-    Items.Add(new MenuItem($"{"Load game",-32}", "l <filename>"));
-    Items.Add(new MenuItem($"{"Undo",-32}", "u"));
-    Items.Add(new MenuItem($"{"Redo",-32}", "r"));
-    Items.Add(new MenuItem($"{"Help",-32}", "h"));
-    Items.Add(new MenuItem($"{"Exit",-32}", "x"));
+    Items.Add(new MenuItem($"{"Save game",-32}", "save <filename>"));
+    Items.Add(new MenuItem($"{"Load game",-32}", "load <filename>"));
+    Items.Add(new MenuItem($"{"Undo",-32}", "undo"));
+    Items.Add(new MenuItem($"{"Redo",-32}", "redo"));
+    Items.Add(new MenuItem($"{"Help",-32}", "help"));
+    Items.Add(new MenuItem($"{"Exit",-32}", "exit"));
   }
 }
