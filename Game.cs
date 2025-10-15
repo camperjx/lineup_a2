@@ -5,8 +5,7 @@ namespace LineUpGame
 {
   abstract class Game
   {
-    private Stack<GameState> undoStack = new();
-    private Stack<GameState> redoStack = new();
+    private History history = new();
 
     protected Board board = null!;
     protected Player p1 = null!;
@@ -43,8 +42,7 @@ namespace LineUpGame
 
     private void SaveState()
     {
-      undoStack.Push(CaptureCurrentState());
-      redoStack.Clear();
+      history.Add(CaptureCurrentState());
     }
 
     private GameState CaptureCurrentState()
@@ -206,29 +204,27 @@ namespace LineUpGame
           // Handle undo
           if (line.Equals("undo", StringComparison.OrdinalIgnoreCase))
           {
-            if (undoStack.Count > 0)
+            var prev = history.Undo(CaptureCurrentState());
+            if (prev == null)
             {
-              var prev = undoStack.Pop();
-              redoStack.Push(CaptureCurrentState());
-              RestoreState(prev);
-              Console.WriteLine("Undo successful.");
+              Console.WriteLine("No moves to undo.");
+              continue;
             }
-            else Console.WriteLine("No moves to undo.");
-            continue;
+            RestoreState(prev);
+            Console.WriteLine("Undo successful.");
           }
 
           // Handle redo
           if (line.Equals("redo", StringComparison.OrdinalIgnoreCase))
           {
-            if (redoStack.Count > 0)
+            var next = history.Redo(CaptureCurrentState());
+            if (next == null)
             {
-              var next = redoStack.Pop();
-              undoStack.Push(CaptureCurrentState());
-              RestoreState(next);
-              Console.WriteLine("Redo successful.");
+              Console.WriteLine("No moves to redo.");
+              continue;
             }
-            else Console.WriteLine("No moves to redo.");
-            continue;
+            RestoreState(next);
+            Console.WriteLine("Redo successful.");
           }
 
           // Handle save
