@@ -7,7 +7,6 @@ public class MenuRenderer : IRenderer<Menu>
 {
   public static void Render(Menu menu)
   {
-    Console.WriteLine("Please select an option:");
     foreach (var item in menu.Items)
     {
       if (item.Key == "" && item.Description == "")

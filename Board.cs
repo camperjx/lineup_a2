@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace LineUpGame
 {
-    class Board
+    public class Board
     {
         private char[,] grid;
         public int Rows { get; private set; }
@@ -255,10 +255,10 @@ namespace LineUpGame
                 return cnt;
             }
             return
-                (1 + CountDir(0, -1) + CountDir(0, +1) >= need) || 
-                (1 + CountDir(-1, 0) + CountDir(+1, 0) >= need) ||  
+                (1 + CountDir(0, -1) + CountDir(0, +1) >= need) ||
+                (1 + CountDir(-1, 0) + CountDir(+1, 0) >= need) ||
                 (1 + CountDir(-1, -1) + CountDir(+1, +1) >= need) ||
-                (1 + CountDir(-1, +1) + CountDir(+1, -1) >= need); 
+                (1 + CountDir(-1, +1) + CountDir(+1, -1) >= need);
         }
         public static bool CanDropOnGrid(char[,] g, int col)
         {

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace LineUpGame
 {
-    class Player
+    public class Player
     {
         public char Symbol { get; }
         public string Name { get; }
@@ -55,7 +55,7 @@ namespace LineUpGame
     public sealed class WinBlockCenterPolicy : IAIPolicy
     {
         public bool CenterBias { get; init; } = true;
-        public int StrongMinEmpty { get; init; } = 0; 
+        public int StrongMinEmpty { get; init; } = 0;
 
         public int ChooseColumn(char[,] grid, int winN, char self, char opponent, Random rng)
         {

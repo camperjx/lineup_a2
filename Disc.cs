@@ -2,7 +2,7 @@ using System;
 
 namespace LineUpGame
 {
-    abstract class Disc
+    public abstract class Disc
     {
         public char OwnerOrdinary { get; }
         protected bool IsP1 => OwnerOrdinary == '@';

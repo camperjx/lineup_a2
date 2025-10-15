@@ -3,30 +3,6 @@ using System.Collections.Generic;
 
 namespace LineUpGame
 {
-  class GameState
-  {
-    public string BoardData { get; set; } = "";
-    public Dictionary<string, int> P1Inventory { get; set; } = new();
-    public Dictionary<string, int> P2Inventory { get; set; } = new();
-    public string CurrentPlayer { get; set; } = "P1";
-    public int TurnCount { get; set; } = 0;
-  }
-
-  static class GameRegistry
-  {
-    public static Player? P1;
-    public static Player? P2;
-
-    public static void ReturnToOwner(char discChar)
-    {
-      if (P1 == null || P2 == null) return;
-      if (discChar == '@' || discChar == 'B' || discChar == 'M' || discChar == 'E')
-        P1.ReturnFromChar(discChar);
-      else if (discChar == '#' || discChar == 'b' || discChar == 'm' || discChar == 'e')
-        P2.ReturnFromChar(discChar);
-    }
-  }
-
   abstract class Game
   {
     private Stack<GameState> undoStack = new();
