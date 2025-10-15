@@ -48,32 +48,22 @@ namespace LineUpGame
 
         public override void Apply(Board board, int r, int c)
         {
-            // 1. Initially drop on the board
             board.ShowFrame("Initial placement (Magnet)");
 
-            // 2. Activate effect
             board.ShowFrame("Effect activated (Magnet)");
 
-            int target = -1;
-            for (int rr = r + 1; rr < board.Rows; rr++)
+            int r1 = r + 1, r2 = r + 2;
+            if (r2 < board.Rows)                
             {
-                if (board.GetCell(rr, c) == OwnerOrdinary)
-                {
-                    target = rr;
-                    break;
-                }
-            }
+                char a = board.GetCell(r1, c);  
+                char b = board.GetCell(r2, c); 
 
-            if (target != -1 && target > r + 1)
-            {
-                char above = board.GetCell(target - 1, c);
-                board.SetCell(target - 1, c, OwnerOrdinary);
-                board.SetCell(target, c, above);
+                board.SetCell(r1, c, b);
+                board.SetCell(r2, c, a);
             }
 
             board.SetCell(r, c, OwnerOrdinary);
 
-            // 3. Final state
             board.ShowFrame("Final state (Magnet)");
         }
     }
