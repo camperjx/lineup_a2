@@ -169,6 +169,12 @@ namespace LineUpGame
             turnCount = 0;
             while (!board.IsFull())
             {
+                if (board.CheckWin(current.Symbol, winCondition))
+                {
+                    board.Display();
+                    Console.WriteLine($"{current.Name} wins!");
+                    return;
+                }
                 board.Display();
                 Console.WriteLine($"Win if you connect {winCondition}.");
                 Console.WriteLine($"Inv P1(O/B/M/E): {p1.Inventory["ordinary"]}/{p1.Inventory["boring"]}/{p1.Inventory["magnet"]}/{p1.Inventory["explode"]} | " +
@@ -193,7 +199,11 @@ namespace LineUpGame
                     Console.Write($"{current.Name} ({current.Symbol}): enter command: ");
                     string? line = Console.ReadLine()?.Trim();
                     if (string.IsNullOrWhiteSpace(line)) continue;
-
+                    // Handle 'exit' to exit
+                    if(line.Equals("exit"))
+                    {
+                        break;
+                    }
                     // Handle 'help' command
                     if (line.Equals("help", StringComparison.OrdinalIgnoreCase))
                     {
