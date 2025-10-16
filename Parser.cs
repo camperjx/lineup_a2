@@ -36,7 +36,7 @@ public class CharParser : IParser<char?>
 
 public class IntParser : IParser<int?>
 {
-  public static bool TryParse(string input, out int? result)
+  public static bool TryParse(string? input, out int? result)
   {
     if (string.IsNullOrEmpty(input))
     {

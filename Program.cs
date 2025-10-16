@@ -4,7 +4,7 @@ namespace LineUpGame
 {
   class Program
   {
-    static void Main(string[] args)
+    static void Main()
     {
       Console.WriteLine("==== LineUp Game ====");
 
@@ -12,39 +12,71 @@ namespace LineUpGame
 
       while (true)
       {
-        Console.WriteLine();
-        MenuRenderer.Render(new GameTypeMenu());
+        bool isGameTypeValid = Utilities.GetGameType(out string? gameType);
+        if (!isGameTypeValid)
+        {
+          Console.WriteLine("Invalid input.");
+          continue;
+        }
 
-        string? opt = Console.ReadLine()?.Trim();
-
-        switch (opt)
+        switch (gameType)
         {
           case "1":
-            new LineUpClassic().Run();
+            bool isModeValid = Utilities.GetPlayMode(out string? playMode);
+
+            if (!isModeValid)
+            {
+              Console.WriteLine("Invalid input.");
+              break;
+            }
+
+            bool isRowsAndColsValid = Utilities.GetRowsAndCols(out int? rows, out int? cols);
+
+            if (!isRowsAndColsValid)
+            {
+              Console.WriteLine("Invalid input.");
+              break;
+            }
+            new LineUpClassic(rows!.Value, cols!.Value, playMode!).TurnLoop();
             break;
           case "2":
-            new LineUpBasic().Run();
+            isModeValid = Utilities.GetPlayMode(out playMode);
+
+            if (!isModeValid)
+            {
+              Console.WriteLine("Invalid input.");
+              break;
+            }
+            new LineUpBasic(playMode!).TurnLoop();
             break;
           case "3":
-            new LineUpSpin().Run();
+            isModeValid = Utilities.GetPlayMode(out playMode);
+
+            if (!isModeValid)
+            {
+              Console.WriteLine("Invalid input.");
+              break;
+            }
+            new LineUpSpin(playMode!).TurnLoop();
             break;
           case "4":
-            new LineUpTest().Run();
+            new LineUpTest().TrunLoop();
             break;
-          case "h":
+          case "5":
             MenuRenderer.Render(new HelpMenu());
             break;
-          case "x":
+          case "6":
             shouldBreak = true;
             break;
           default:
             Console.WriteLine("Invalid option. Try again.");
             break;
         }
-        if (shouldBreak) break;
+        if (shouldBreak)
+        {
+          break;
+        }
       }
     }
-
-
   }
 }

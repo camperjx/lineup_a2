@@ -1,25 +1,26 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace LineUpGame
 {
-  abstract class Game
+  public abstract class Game
   {
-    protected int rows;
-    protected int cols;
-    private History history = new();
+    public required History history { get; set; } = new();
 
-    protected Board board = null!;
-    protected Player p1 = null!;
-    protected Player p2 = null!;
-    protected Player current = null!;
-    protected int winCondition;
-    protected string playMode = "HvH";
-    protected int turnCount = 0;
+    public required Board board { get; set; }
+    public required Player p1 { get; set; }
+    public required Player p2 { get; set; }
+    public required Player currentPlayer { get; set; }
+    public required int winCondition { get; set; }
+    public required string playMode { get; set; } = "HvH";
+    public required int turnCount { get; set; } = 0;
+    public required bool ordinaryOnly { get; set; } = false;
+    public required bool spinEnabled { get; set; } = false;
 
     protected virtual int GetTotalCells()
     {
-      return rows * cols;
+      return board.Rows * board.Columns;
     }
 
     protected virtual int GetPerPlayer()
@@ -32,34 +33,19 @@ namespace LineUpGame
       return Math.Max(0, GetPerPlayer() - 6);
     }
 
-    public void Run()
-    {
-      SetupPlayers();
-      ConfigureBoard();
-      ConfigureInventory();
-      ConfigureRules();
-      TurnLoop(UseOnlyOrdinary(), EnableSpin());
-    }
-
-    protected abstract void ConfigureBoard();
-    protected abstract void ConfigureInventory();
-    protected abstract void ConfigureRules();
-    protected abstract bool UseOnlyOrdinary();
-    protected abstract bool EnableSpin();
-
-    private void SaveState()
+    protected virtual void SaveState()
     {
       history.Add(CaptureCurrentState());
     }
 
-    private GameState CaptureCurrentState()
+    protected virtual GameState CaptureCurrentState()
     {
       return new GameState
       {
         BoardData = board.Serialize(),
         P1Inventory = p1.Inventories.ToDictionary(inv => inv.Type, inv => inv.Count()),
         P2Inventory = p2.Inventories.ToDictionary(inv => inv.Type, inv => inv.Count()),
-        CurrentPlayer = current == p1 ? "P1" : "P2",
+        CurrentPlayer = currentPlayer == p1 ? "P1" : "P2",
         TurnCount = turnCount
       };
     }
@@ -79,29 +65,11 @@ namespace LineUpGame
         var inv = InventoryFactory.CreateInventory(kv.Key, char.Parse("#"), kv.Value);
         p2.Inventories.Add(inv);
       }
-      current = (st.CurrentPlayer == "P1") ? p1 : p2;
+      currentPlayer = (st.CurrentPlayer == "P1") ? p1 : p2;
       turnCount = st.TurnCount;
     }
 
-    protected void SetupPlayers()
-    {
-      Console.WriteLine("Select play mode:");
-      Console.WriteLine("  1. Human vs Human");
-      Console.WriteLine("  2. Human vs Computer");
-      Console.Write("Enter option (1-2): ");
-      string? opt = Console.ReadLine()?.Trim();
-      playMode = opt == "2" ? "HvC" : "HvH";
-
-      p1 = new HumanPlayer('@', "Player1");
-      p2 = playMode == "HvC" ? new AIPlayer('#', "Computer") : new HumanPlayer('#', "Player2");
-
-      ConfigureInventory();
-      current = p1;
-      GameRegistry.P1 = p1;
-      GameRegistry.P2 = p2;
-    }
-
-    protected bool ExecuteHumanCommand(string input, bool onlyOrdinary)
+    protected bool ExecuteHumanCommand(string input)
     {
       /*
         Take move input, parse and execute.
@@ -131,20 +99,20 @@ namespace LineUpGame
           Console.WriteLine("Invalid disc type.");
           return false;
         }
-        if (onlyOrdinary)
+        if (ordinaryOnly)
         {
           type = "ordinary";
         }
-        if (!current.HasDisc(type))
+        if (!currentPlayer.HasDisc(type))
         {
           Console.WriteLine($"No {type} discs remaining.");
           return false;
         }
-        Disc disc = DiscFactory.CreateDisc(type, current.Symbol);
+        Disc disc = DiscFactory.CreateDisc(type, currentPlayer.Symbol);
         SaveState();
         if (board.DropDisc(col!.Value, disc))
         {
-          current.Consume(type);
+          currentPlayer.Consume(type);
           return true;
         }
         return false;
@@ -159,28 +127,28 @@ namespace LineUpGame
           return false;
         }
         string type = "ordinary";
-        if (!current.HasDisc(type))
+        if (!currentPlayer.HasDisc(type))
         {
           Console.WriteLine("No ordinary discs.");
           return false;
         }
-        Disc disc = DiscFactory.CreateDisc(type, current.Symbol);
+        Disc disc = DiscFactory.CreateDisc(type, currentPlayer.Symbol);
         SaveState();
         if (board.DropDisc(col!.Value, disc))
         {
-          current.Consume(type);
+          currentPlayer.Consume(type);
           return true;
         }
         return false;
       }
     }
 
-    private char GetOpponentSymbol(Player current)
+    private char GetOpponentSymbol(Player currentPlayer)
     {
-      return current == p1 ? p2.Symbol : p1.Symbol;
+      return currentPlayer == p1 ? p2.Symbol : p1.Symbol;
     }
 
-    protected void TurnLoop(bool onlyOrdinary, bool doSpin = false)
+    public void TurnLoop()
     {
       turnCount = 0;
       while (!board.IsFull())
@@ -204,12 +172,12 @@ namespace LineUpGame
         }
         Console.WriteLine(s.TrimEnd('/'));
 
-        // Check if current player is AI
-        if (current is AIPlayer ai)
+        // Check if currentPlayer player is AI
+        if (currentPlayer is AIPlayer ai)
         {
           char[,] grid = board.ExportGrid();
           int winN = winCondition;
-          char opponent = GetOpponentSymbol(current);
+          char opponent = GetOpponentSymbol(currentPlayer);
 
           int col = ai.ChooseColumn(grid, winN, opponent);
           if (col >= 0 && board.DropDisc(col, DiscFactory.CreateDisc("ordinary", ai.Symbol)))
@@ -220,7 +188,7 @@ namespace LineUpGame
         else
         {
           // Human player - prompt for input
-          Console.Write($"{current.Name} ({current.Symbol}): enter command: ");
+          Console.Write($"{currentPlayer.Name} ({currentPlayer.Symbol}): enter command: ");
           string? line = Console.ReadLine()?.Trim();
           if (string.IsNullOrWhiteSpace(line)) continue;
 
@@ -276,21 +244,21 @@ namespace LineUpGame
           }
 
           // Try to execute the move
-          bool moved = ExecuteHumanCommand(line, onlyOrdinary);
+          bool moved = ExecuteHumanCommand(line);
           if (!moved) continue;
         }
 
         // Check for win after move
-        if (board.CheckWin(current.Symbol, winCondition))
+        if (board.CheckWin(currentPlayer.Symbol, winCondition))
         {
           BoardRenderer.Render(board);
-          Console.WriteLine($"{current.Name} wins!");
+          Console.WriteLine($"{currentPlayer.Name} wins!");
           return;
         }
 
         // Handle board rotation for Spin mode
         turnCount++;
-        if (doSpin && turnCount % 5 == 0)
+        if (spinEnabled && turnCount % 5 == 0)
         {
           Console.WriteLine(">>> Board rotates 90° clockwise and gravity reapplies!");
           board.RotateClockwise();
@@ -298,7 +266,7 @@ namespace LineUpGame
         }
 
         // Switch to other player
-        current = (current == p1) ? p2 : p1;
+        currentPlayer = (currentPlayer == p1) ? p2 : p1;
       }
 
       BoardRenderer.Render(board);
@@ -311,7 +279,7 @@ namespace LineUpGame
       w.WriteLine(board.Rows);
       w.WriteLine(board.Columns);
       w.WriteLine(winCondition);
-      w.WriteLine(current == p1 ? "P1" : "P2");
+      w.WriteLine(currentPlayer == p1 ? "P1" : "P2");
       w.WriteLine(playMode);
       w.WriteLine(this.GetType().Name);
 
@@ -371,7 +339,7 @@ namespace LineUpGame
 
       GameRegistry.P1 = p1;
       GameRegistry.P2 = p2;
-      current = curStr == "P1" ? p1 : p2;
+      currentPlayer = curStr == "P1" ? p1 : p2;
 
       board = new Board(rows, cols);
       for (int r = 0; r < rows; r++)
@@ -379,24 +347,24 @@ namespace LineUpGame
         string line = lines[idx++];
         for (int c = 0; c < cols && c < line.Length; c++) board.SetCell(r, c, line[c]);
       }
-      Console.WriteLine($"Loaded: {gameType} {rows}x{cols} {playMode}, next={current.Name}");
+      Console.WriteLine($"Loaded: {gameType} {rows}x{cols} {playMode}, next={currentPlayer.Name}");
       return true;
     }
   }
 
   class LineUpClassic : Game
   {
-    protected override void ConfigureBoard()
+    [SetsRequiredMembers]
+    public LineUpClassic(int rows, int cols, string playMode_)
     {
-      Console.Write("Rows (>=6): ");
-      rows = int.Parse(Console.ReadLine()!);
-      Console.Write("Cols (>=7, cols>=rows): ");
-      cols = int.Parse(Console.ReadLine()!);
+      history = new History();
       board = new Board(rows, cols);
-    }
-
-    protected override void ConfigureInventory()
-    {
+      playMode = playMode_;
+      p1 = new HumanPlayer('@', "Player1");
+      p2 = playMode == "HvC" ? new AIPlayer('#', "Computer") : new HumanPlayer('#', "Player2");
+      currentPlayer = p1;
+      GameRegistry.P1 = p1;
+      GameRegistry.P2 = p2;
       p1.Inventories = new List<Inventory>{
         InventoryFactory.CreateInventory("ordinary", char.Parse("@"), GetOrdinaryCount()),
         InventoryFactory.CreateInventory("boring", char.Parse("@"), 2),
@@ -409,81 +377,61 @@ namespace LineUpGame
         InventoryFactory.CreateInventory("magnet", char.Parse("#"), 2),
         InventoryFactory.CreateInventory("exploding", char.Parse("#"), 2)
       };
+      winCondition = Math.Max(4, (int)(board.Rows * board.Columns * 0.1));
     }
-
-    protected override void ConfigureRules()
-    {
-      winCondition = Math.Max(4, (int)Math.Floor(rows * cols * 0.1));
-    }
-
-    protected override bool UseOnlyOrdinary() => false;
-    protected override bool EnableSpin() => false;
   }
 
   class LineUpBasic : Game
   {
-    public LineUpBasic()
+    [SetsRequiredMembers]
+    public LineUpBasic(string playMode_)
     {
-      rows = 8;
-      cols = 9;
+      history = new History();
+      board = new Board(8, 9);
+      playMode = playMode_;
+      p1 = new HumanPlayer('@', "Player1");
+      p2 = playMode == "HvC" ? new AIPlayer('#', "Computer") : new HumanPlayer('#', "Player2");
+      currentPlayer = p1;
+      GameRegistry.P1 = p1;
+      GameRegistry.P2 = p2;
+      p1.Inventories = new List<Inventory>{
+        InventoryFactory.CreateInventory("ordinary", char.Parse("@"), GetOrdinaryCount()),
+      };
+      p2.Inventories = new List<Inventory>{
+        InventoryFactory.CreateInventory("ordinary", char.Parse("#"), GetOrdinaryCount()),
+      };
+      winCondition = Math.Max(4, (int)(board.Rows * board.Columns * 0.1));
+      ordinaryOnly = true;
     }
 
     protected override int GetOrdinaryCount()
     {
       return GetPerPlayer();
     }
-    protected override void ConfigureBoard()
-    {
-      board = new Board(rows, cols);
-    }
-
-    protected override void ConfigureInventory()
-    {
-      p1.Inventories = new List<Inventory>{
-        InventoryFactory.CreateInventory("ordinary", char.Parse("@"), GetOrdinaryCount()),
-      };
-      p2.Inventories = new List<Inventory>{
-        InventoryFactory.CreateInventory("ordinary", char.Parse("#"), GetOrdinaryCount()),
-      };
-    }
-
-    protected override void ConfigureRules()
-    {
-      winCondition = Math.Max(4, (int)Math.Floor(rows * cols * 0.1));
-    }
-
-    protected override bool UseOnlyOrdinary() => true;
-    protected override bool EnableSpin() => false;
   }
 
   class LineUpSpin : Game
   {
-    public LineUpSpin()
+    [SetsRequiredMembers]
+    public LineUpSpin(string playMode_)
     {
-      rows = 8;
-      cols = 9;
-    }
-    protected override void ConfigureBoard()
-    {
-      board = new Board(rows, cols);
-    }
-
-    protected override void ConfigureInventory()
-    {
+      history = new History();
+      board = new Board(8, 9);
+      playMode = playMode_;
+      p1 = new HumanPlayer('@', "Player1");
+      p2 = playMode == "HvC" ? new AIPlayer('#', "Computer") : new HumanPlayer('#', "Player2");
+      currentPlayer = p1;
+      GameRegistry.P1 = p1;
+      GameRegistry.P2 = p2;
       p1.Inventories = new List<Inventory>{
         InventoryFactory.CreateInventory("ordinary", char.Parse("@"), GetOrdinaryCount()),
       };
       p2.Inventories = new List<Inventory>{
         InventoryFactory.CreateInventory("ordinary", char.Parse("#"), GetOrdinaryCount()),
       };
+      winCondition = Math.Max(4, (int)(board.Rows * board.Columns * 0.1));
+      ordinaryOnly = true;
+      spinEnabled = true;
     }
-
-    protected override void ConfigureRules()
-    {
-      winCondition = Math.Max(4, (int)Math.Floor(rows * cols * 0.1));
-    }
-
-    protected override bool UseOnlyOrdinary() => true;
-    protected override bool EnableSpin() => true;  // Key difference - enables rotation!
   }
 }

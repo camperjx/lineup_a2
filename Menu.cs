@@ -31,8 +31,8 @@ public class GameTypeMenu : Menu
     Items.Add(new MenuItem("2", "LineUp Basic (ordinary only)"));
     Items.Add(new MenuItem("3", "LineUp Spin (ordinary only + board rotates every 5 turns)"));
     Items.Add(new MenuItem("4", "Test Mode (run scripted sequence)"));
-    Items.Add(new MenuItem("h", "Help"));
-    Items.Add(new MenuItem("x", "Exit"));
+    Items.Add(new MenuItem("5", "Help"));
+    Items.Add(new MenuItem("6", "Exit"));
   }
 }
 
@@ -63,5 +63,14 @@ public class HelpMenu : Menu
     Items.Add(new MenuItem($"{"Redo",-32}", "redo"));
     Items.Add(new MenuItem($"{"Help",-32}", "help"));
     Items.Add(new MenuItem($"{"Exit",-32}", "exit"));
+  }
+}
+
+public class PlayModeMenu : Menu
+{
+  public PlayModeMenu()
+  {
+    Items.Add(new MenuItem("1", "Human vs Human"));
+    Items.Add(new MenuItem("2", "Human vs Computer"));
   }
 }
