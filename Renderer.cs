@@ -1,3 +1,5 @@
+using LineUpGame;
+
 namespace LineUpGame
 {
   /*
@@ -48,6 +50,18 @@ namespace LineUpGame
       Console.Write(" ");
       for (int c = 0; c < board.Columns; c++) Console.Write($" {c}  ");
       Console.WriteLine("\n");
+    }
+  }
+
+  public readonly record struct Parameters(Board board, string message, int delay);
+
+  public class Decorator : IRenderer<Parameters>
+  {
+    public static void Render(Parameters parameters)
+    {
+      BoardRenderer.Render(parameters.board);
+      Console.WriteLine(parameters.message);
+      System.Threading.Thread.Sleep(parameters.delay);
     }
   }
 }
