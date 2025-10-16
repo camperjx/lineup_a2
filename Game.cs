@@ -6,8 +6,6 @@ namespace LineUpGame
     class GameState
     {
         public string BoardData { get; set; } = "";
-        public int Rows { get; set; }
-        public int Cols { get; set; }
         public Dictionary<string, int> P1Inventory { get; set; } = new();
         public Dictionary<string, int> P2Inventory { get; set; } = new();
         public string CurrentPlayer { get; set; } = "P1";
@@ -78,8 +76,6 @@ namespace LineUpGame
             return new GameState
             {
                 BoardData = board.Serialize(),
-                Rows = board.Rows, 
-                Cols = board.Columns,   
                 P1Inventory = new Dictionary<string, int>(p1.Inventory),
                 P2Inventory = new Dictionary<string, int>(p2.Inventory),
                 CurrentPlayer = current == p1 ? "P1" : "P2",
@@ -89,14 +85,9 @@ namespace LineUpGame
 
         private void RestoreState(GameState st)
         {
-            if (board.Rows != st.Rows || board.Columns != st.Cols)
-                 board = new Board(st.Rows, st.Cols, validate: false);  
-
             board.Deserialize(st.BoardData);
-
             p1.Inventory.Clear(); foreach (var kv in st.P1Inventory) p1.Inventory[kv.Key] = kv.Value;
             p2.Inventory.Clear(); foreach (var kv in st.P2Inventory) p2.Inventory[kv.Key] = kv.Value;
-
             current = (st.CurrentPlayer == "P1") ? p1 : p2;
             turnCount = st.TurnCount;
         }
@@ -199,7 +190,6 @@ namespace LineUpGame
                     int col = ai.ChooseColumn(grid, winN, opponent);
                     if (col >= 0 && board.DropDisc(col, ai.CreateDisc("ordinary")))
                     {
-                        SaveState();
                         ai.Consume("ordinary");
                     }
                 }
@@ -224,38 +214,28 @@ namespace LineUpGame
                     // Handle undo
                     if (line.Equals("undo", StringComparison.OrdinalIgnoreCase))
                     {
-                        int steps = (playMode == "HvC") ? 2 : 1;
-
-                        bool did = false;
-                        for (int i = 0; i < steps; i++)
+                        if (undoStack.Count > 0)
                         {
-                            if (undoStack.Count == 0) break;
                             var prev = undoStack.Pop();
                             redoStack.Push(CaptureCurrentState());
                             RestoreState(prev);
-                            did = true;
+                            Console.WriteLine("Undo successful.");
                         }
-
-                        Console.WriteLine(did ? "Undo successful." : "No moves to undo.");
+                        else Console.WriteLine("No moves to undo.");
                         continue;
                     }
 
                     // Handle redo
                     if (line.Equals("redo", StringComparison.OrdinalIgnoreCase))
                     {
-                        int steps = (playMode == "HvC") ? 2 : 1;
-
-                        bool did = false;
-                        for (int i = 0; i < steps; i++)
+                        if (redoStack.Count > 0)
                         {
-                            if (redoStack.Count == 0) break;
                             var next = redoStack.Pop();
                             undoStack.Push(CaptureCurrentState());
                             RestoreState(next);
-                            did = true;
+                            Console.WriteLine("Redo successful.");
                         }
-
-                        Console.WriteLine(did ? "Redo successful." : "No moves to redo.");
+                        else Console.WriteLine("No moves to redo.");
                         continue;
                     }
 
@@ -379,31 +359,11 @@ namespace LineUpGame
 
         protected override void ConfigureBoard()
         {
-            while (true)
-            {
-                Console.Write("Rows (>=6): ");
-                if (!int.TryParse(Console.ReadLine(), out rows) || rows < 6)
-                {
-                    Console.WriteLine("✗ Rows must be an integer ≥ 6.");
-                    continue;
-                }
-
-                Console.Write("Cols (>=7, cols >= rows): ");
-                if (!int.TryParse(Console.ReadLine(), out cols) || cols < 7)
-                {
-                    Console.WriteLine("✗ Cols must be an integer ≥ 7.");
-                    continue;
-                }
-
-                if (cols < rows)
-                {
-                    Console.WriteLine("✗ Cols must be ≥ Rows. Please re-enter.");
-                    continue;
-                }
-
-                board = new Board(rows, cols, validate: true);
-                break;
-            }
+            Console.Write("Rows (>=6): ");
+            rows = int.Parse(Console.ReadLine()!);
+            Console.Write("Cols (>=7, cols>=rows): ");
+            cols = int.Parse(Console.ReadLine()!);
+            board = new Board(rows, cols);
         }
 
         protected override void ConfigureInventory()

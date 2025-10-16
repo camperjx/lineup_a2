@@ -11,16 +11,10 @@ namespace LineUpGame
         public int Rows { get; private set; }
         public int Columns { get; private set; }
 
-        public Board(int rows, int cols, bool validate = true)
+        public Board(int rows, int cols)
         {
-            if (validate)
-            {
-                if (rows < 6 || cols < 7)
-                    throw new ArgumentException("Minimum board is 6x7.");
-                
-                if (rows > cols) 
-                    throw new ArgumentException("Rows cannot exceed columns.");
-            }
+            if (rows < 6 || cols < 7) throw new ArgumentException("Minimum board is 6x7.");
+            if (rows > cols) throw new ArgumentException("Rows cannot exceed columns.");
             Rows = rows;
             Columns = cols;
             grid = new char[Rows, Columns];
@@ -166,34 +160,23 @@ namespace LineUpGame
 
         public string Serialize()
         {
-
-            var sb = new System.Text.StringBuilder(Rows * (Columns + 1));
+            var lines = new List<string>();
             for (int r = 0; r < Rows; r++)
             {
+                var row = "";
                 for (int c = 0; c < Columns; c++)
-                    sb.Append(grid[r, c]);   
-                sb.Append('\n');
+                    row += grid[r, c];
+                lines.Add(row);
             }
-            return sb.ToString();
+            return string.Join("\n", lines);
         }
 
         public void Deserialize(string data)
         {
-            if (data is null) throw new ArgumentNullException(nameof(data));
-
             var lines = data.Split('\n');
-
             for (int r = 0; r < Rows; r++)
-            {
-                string line = (r < lines.Length) ? lines[r] : string.Empty;
-
                 for (int c = 0; c < Columns; c++)
-                {
-                    char ch = (c < line.Length) ? line[c] : ' ';
-                    if (ch == '\r') ch = ' ';
-                    grid[r, c] = ch;
-                }
-            }
+                    grid[r, c] = lines[r][c];
         }
 
 
@@ -203,7 +186,7 @@ namespace LineUpGame
             Display();
             if (!string.IsNullOrEmpty(message))
                 Console.WriteLine(message);
-            System.Threading.Thread.Sleep(500); 
+            System.Threading.Thread.Sleep(500); // 延迟0.5秒模拟动画帧
         }
 
 
