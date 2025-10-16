@@ -5,6 +5,8 @@ namespace LineUpGame
 {
   abstract class Game
   {
+    protected int rows;
+    protected int cols;
     private History history = new();
 
     protected Board board = null!;
@@ -14,6 +16,21 @@ namespace LineUpGame
     protected int winCondition;
     protected string playMode = "HvH";
     protected int turnCount = 0;
+
+    protected virtual int GetTotalCells()
+    {
+      return rows * cols;
+    }
+
+    protected virtual int GetPerPlayer()
+    {
+      return GetTotalCells() / 2;
+    }
+
+    protected virtual int GetOrdinaryCount()
+    {
+      return Math.Max(0, GetPerPlayer() - 6);
+    }
 
     // ═══════════════════════════════════════════════════════════
     // TEMPLATE METHOD - Defines the algorithm structure
@@ -27,18 +44,11 @@ namespace LineUpGame
       TurnLoop(UseOnlyOrdinary(), EnableSpin());
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // TEMPLATE HOOKS - To be implemented by subclasses
-    // ═══════════════════════════════════════════════════════════
     protected abstract void ConfigureBoard();
     protected abstract void ConfigureInventory();
     protected abstract void ConfigureRules();
     protected abstract bool UseOnlyOrdinary();
     protected abstract bool EnableSpin();
-
-    // ═══════════════════════════════════════════════════════════
-    // COMMON METHODS - Shared by all game modes
-    // ═══════════════════════════════════════════════════════════
 
     private void SaveState()
     {
@@ -50,8 +60,8 @@ namespace LineUpGame
       return new GameState
       {
         BoardData = board.Serialize(),
-        P1Inventory = new Dictionary<string, int>(p1.Inventory),
-        P2Inventory = new Dictionary<string, int>(p2.Inventory),
+        P1Inventory = p1.Inventories.ToDictionary(inv => inv.Type, inv => inv.Count()),
+        P2Inventory = p2.Inventories.ToDictionary(inv => inv.Type, inv => inv.Count()),
         CurrentPlayer = current == p1 ? "P1" : "P2",
         TurnCount = turnCount
       };
@@ -60,8 +70,18 @@ namespace LineUpGame
     private void RestoreState(GameState st)
     {
       board.Deserialize(st.BoardData);
-      p1.Inventory.Clear(); foreach (var kv in st.P1Inventory) p1.Inventory[kv.Key] = kv.Value;
-      p2.Inventory.Clear(); foreach (var kv in st.P2Inventory) p2.Inventory[kv.Key] = kv.Value;
+      p1.Inventories.Clear();
+      foreach (var kv in st.P1Inventory)
+      {
+        var inv = InventoryFactory.CreateInventory(kv.Key, char.Parse("@"), kv.Value);
+        p1.Inventories.Add(inv);
+      }
+      p2.Inventories.Clear();
+      foreach (var kv in st.P2Inventory)
+      {
+        var inv = InventoryFactory.CreateInventory(kv.Key, char.Parse("#"), kv.Value);
+        p2.Inventories.Add(inv);
+      }
       current = (st.CurrentPlayer == "P1") ? p1 : p2;
       turnCount = st.TurnCount;
     }
@@ -78,8 +98,7 @@ namespace LineUpGame
       p1 = new HumanPlayer('@', "Player1");
       p2 = playMode == "HvC" ? new AIPlayer('#', "Computer") : new HumanPlayer('#', "Player2");
 
-      p1.ResetDefaultInventory();
-      p2.ResetDefaultInventory();
+      ConfigureInventory();
       current = p1;
       GameRegistry.P1 = p1;
       GameRegistry.P2 = p2;
@@ -99,7 +118,7 @@ namespace LineUpGame
         bool isColParsed = IntParser.TryParse(input[1..], out int? col);
         if (!isColParsed)
         {
-          Console.WriteLine("Invalid column.");
+          Console.WriteLine("Invalid input.");
           return false;
         }
         string type = symbol switch
@@ -107,7 +126,7 @@ namespace LineUpGame
           'O' or 'o' => "ordinary",
           'B' or 'b' => "boring",
           'M' or 'm' => "magnet",
-          'E' or 'e' => "explode",
+          'E' or 'e' => "exploding",
           _ => ""
         };
         if (type == "")
@@ -171,8 +190,22 @@ namespace LineUpGame
       {
         board.Display();
         Console.WriteLine($"Win if you connect {winCondition}.");
-        Console.WriteLine($"Inv P1(O/B/M/E): {p1.Inventory["ordinary"]}/{p1.Inventory["boring"]}/{p1.Inventory["magnet"]}/{p1.Inventory["explode"]} | " +
-                          $"P2: {p2.Inventory["ordinary"]}/{p2.Inventory["boring"]}/{p2.Inventory["magnet"]}/{p2.Inventory["explode"]}");
+
+        string s = "Inv P1(O/B/M/E): ";
+
+        foreach (var inv in p1.Inventories)
+        {
+          s += $"{inv.Count()}/";
+        }
+
+        s = s.TrimEnd('/');
+        s += " | P2: Inv P2(O/B/M/E): ";
+
+        foreach (var inv in p2.Inventories)
+        {
+          s += $"{inv.Count()}/";
+        }
+        Console.WriteLine(s.TrimEnd('/'));
 
         // Check if current player is AI
         if (current is AIPlayer ai)
@@ -284,8 +317,23 @@ namespace LineUpGame
       w.WriteLine(current == p1 ? "P1" : "P2");
       w.WriteLine(playMode);
       w.WriteLine(this.GetType().Name);
-      w.WriteLine($"{p1.Inventory["ordinary"]},{p1.Inventory["boring"]},{p1.Inventory["magnet"]},{p1.Inventory["explode"]}");
-      w.WriteLine($"{p2.Inventory["ordinary"]},{p2.Inventory["boring"]},{p2.Inventory["magnet"]},{p2.Inventory["explode"]}");
+
+      string s = "";
+      foreach (var inv in p1.Inventories)
+      {
+        s += $"{inv.Count()},";
+      }
+      s = s.TrimEnd(',');
+      w.WriteLine(s);
+
+      s = "";
+      foreach (var inv in p2.Inventories)
+      {
+        s += $"{inv.Count()},";
+      }
+      s = s.TrimEnd(',');
+      w.WriteLine(s);
+
       for (int r = 0; r < board.Rows; r++)
       {
         for (int c = 0; c < board.Columns; c++) w.Write(board.GetCell(r, c));
@@ -310,16 +358,19 @@ namespace LineUpGame
 
       p1 = new HumanPlayer('@', "Player1");
       p2 = playMode == "HvC" ? new AIPlayer('#', "Computer") : new HumanPlayer('#', "Player2");
-      p1.ResetDefaultInventory();
-      p2.ResetDefaultInventory();
-      p1.Inventory["ordinary"] = int.Parse(p1Inv[0]);
-      p1.Inventory["boring"] = int.Parse(p1Inv[1]);
-      p1.Inventory["magnet"] = int.Parse(p1Inv[2]);
-      p1.Inventory["explode"] = int.Parse(p1Inv[3]);
-      p2.Inventory["ordinary"] = int.Parse(p2Inv[0]);
-      p2.Inventory["boring"] = int.Parse(p2Inv[1]);
-      p2.Inventory["magnet"] = int.Parse(p2Inv[2]);
-      p2.Inventory["explode"] = int.Parse(p2Inv[3]);
+
+      p1.Inventories = new List<Inventory>{
+        InventoryFactory.CreateInventory("ordinary", char.Parse("@"), int.Parse(p1Inv[0])),
+        InventoryFactory.CreateInventory("boring", char.Parse("@"), int.Parse(p1Inv[1])),
+        InventoryFactory.CreateInventory("magnet", char.Parse("@"), int.Parse(p1Inv[2])),
+        InventoryFactory.CreateInventory("exploding", char.Parse("@"), int.Parse(p1Inv[3]))
+      };
+      p2.Inventories = new List<Inventory>{
+        InventoryFactory.CreateInventory("ordinary", char.Parse("#"), int.Parse(p2Inv[0])),
+        InventoryFactory.CreateInventory("boring", char.Parse("#"), int.Parse(p2Inv[1])),
+        InventoryFactory.CreateInventory("magnet", char.Parse("#"), int.Parse(p2Inv[2])),
+        InventoryFactory.CreateInventory("exploding", char.Parse("#"), int.Parse(p2Inv[3]))
+      };
 
       GameRegistry.P1 = p1;
       GameRegistry.P2 = p2;
@@ -342,9 +393,6 @@ namespace LineUpGame
 
   class LineUpClassic : Game
   {
-    private int rows;
-    private int cols;
-
     protected override void ConfigureBoard()
     {
       Console.Write("Rows (>=6): ");
@@ -356,12 +404,18 @@ namespace LineUpGame
 
     protected override void ConfigureInventory()
     {
-      int totalCells = rows * cols;
-      int perPlayer = totalCells / 2;
-      int ordinary = Math.Max(0, perPlayer - 6);
-      p1.Inventory["ordinary"] = ordinary;
-      p2.Inventory["ordinary"] = ordinary;
-      // Special discs (boring, magnet, explode) already set to 2 by ResetDefaultInventory()
+      p1.Inventories = new List<Inventory>{
+        InventoryFactory.CreateInventory("ordinary", char.Parse("@"), GetOrdinaryCount()),
+        InventoryFactory.CreateInventory("boring", char.Parse("@"), 2),
+        InventoryFactory.CreateInventory("magnet", char.Parse("@"), 2),
+        InventoryFactory.CreateInventory("exploding", char.Parse("@"), 2)
+      };
+      p2.Inventories = new List<Inventory>{
+        InventoryFactory.CreateInventory("ordinary", char.Parse("#"), GetOrdinaryCount()),
+        InventoryFactory.CreateInventory("boring", char.Parse("#"), 2),
+        InventoryFactory.CreateInventory("magnet", char.Parse("#"), 2),
+        InventoryFactory.CreateInventory("exploding", char.Parse("#"), 2)
+      };
     }
 
     protected override void ConfigureRules()
@@ -375,33 +429,34 @@ namespace LineUpGame
 
   class LineUpBasic : Game
   {
-    private const int ROWS = 8;
-    private const int COLS = 9;
+    public LineUpBasic()
+    {
+      rows = 8;
+      cols = 9;
+    }
 
+    protected override int GetOrdinaryCount()
+    {
+      return GetPerPlayer();
+    }
     protected override void ConfigureBoard()
     {
-      board = new Board(ROWS, COLS);
+      board = new Board(rows, cols);
     }
 
     protected override void ConfigureInventory()
     {
-      int totalCells = ROWS * COLS;
-      int perPlayer = totalCells / 2;
-      p1.Inventory["ordinary"] = perPlayer;
-      p2.Inventory["ordinary"] = perPlayer;
-
-      // Disable special discs
-      p1.Inventory["boring"] = 0;
-      p1.Inventory["magnet"] = 0;
-      p1.Inventory["explode"] = 0;
-      p2.Inventory["boring"] = 0;
-      p2.Inventory["magnet"] = 0;
-      p2.Inventory["explode"] = 0;
+      p1.Inventories = new List<Inventory>{
+        InventoryFactory.CreateInventory("ordinary", char.Parse("@"), GetOrdinaryCount()),
+      };
+      p2.Inventories = new List<Inventory>{
+        InventoryFactory.CreateInventory("ordinary", char.Parse("#"), GetOrdinaryCount()),
+      };
     }
 
     protected override void ConfigureRules()
     {
-      winCondition = Math.Max(4, (int)Math.Floor(ROWS * COLS * 0.1));
+      winCondition = Math.Max(4, (int)Math.Floor(rows * cols * 0.1));
     }
 
     protected override bool UseOnlyOrdinary() => true;
@@ -420,18 +475,12 @@ namespace LineUpGame
 
     protected override void ConfigureInventory()
     {
-      int totalCells = ROWS * COLS;
-      int perPlayer = totalCells / 2;
-      p1.Inventory["ordinary"] = perPlayer;
-      p2.Inventory["ordinary"] = perPlayer;
-
-      // Disable special discs
-      p1.Inventory["boring"] = 0;
-      p1.Inventory["magnet"] = 0;
-      p1.Inventory["explode"] = 0;
-      p2.Inventory["boring"] = 0;
-      p2.Inventory["magnet"] = 0;
-      p2.Inventory["explode"] = 0;
+      p1.Inventories = new List<Inventory>{
+        InventoryFactory.CreateInventory("ordinary", char.Parse("@"), GetOrdinaryCount()),
+      };
+      p2.Inventories = new List<Inventory>{
+        InventoryFactory.CreateInventory("ordinary", char.Parse("#"), GetOrdinaryCount()),
+      };
     }
 
     protected override void ConfigureRules()

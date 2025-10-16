@@ -13,6 +13,16 @@ namespace LineUpGame
 
     public Player(char symbol, string name) { Symbol = symbol; Name = name; }
 
+    public Inventory? GetInventoryByType(string type)
+    {
+      return Inventories.Find(i => i.Type == type);
+    }
+
+    public Inventory? GetInventoryBySymbol(char symbol)
+    {
+      return Inventories.Find(i => char.ToUpper(i.Symbol) == char.ToUpper(symbol));
+    }
+
     public void ResetInventory(Inventory inv, int Count)
     {
       inv.Clear();
@@ -21,7 +31,7 @@ namespace LineUpGame
 
     public bool HasDisc(string type)
     {
-      var inv = Inventories.Find(i => i.Type == type);
+      var inv = GetInventoryByType(type);
       return inv != null && inv.Count() > 0;
     }
     // TODO: refactor to factory class
@@ -29,12 +39,12 @@ namespace LineUpGame
     {
       "boring" => new BoringDisc(Symbol),
       "magnet" => new MagnetDisc(Symbol),
-      "explode" => new ExplodingDisc(Symbol),
+      "exploding" => new ExplodingDisc(Symbol),
       _ => new OrdinaryDisc(Symbol)
     };
     public void Consume(string type)
     {
-      var inv = Inventories.Find(i => i.Type == type);
+      var inv = GetInventoryByType(type);
       if (inv != null)
       {
         inv.Decrement();
@@ -43,7 +53,7 @@ namespace LineUpGame
 
     public void ReturnFromChar(char ch)
     {
-      var inv = Inventories.Find(i => char.ToUpper(i.Symbol) == char.ToUpper(ch));
+      var inv = GetInventoryBySymbol(ch);
       if (inv != null)
       {
         inv.Increment(CreateDisc(inv.Type));

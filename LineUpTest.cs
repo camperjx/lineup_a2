@@ -14,14 +14,18 @@ namespace LineUpGame
         {
             // Unlimited inventory for testing
             int maxDiscs = ROWS * COLS;
-            p1.Inventory["ordinary"] = maxDiscs;
-            p2.Inventory["ordinary"] = maxDiscs;
-            p1.Inventory["boring"] = maxDiscs;
-            p1.Inventory["magnet"] = maxDiscs;
-            p1.Inventory["explode"] = maxDiscs;
-            p2.Inventory["boring"] = maxDiscs;
-            p2.Inventory["magnet"] = maxDiscs;
-            p2.Inventory["explode"] = maxDiscs;
+      p1.Inventories = new List<Inventory>{
+        InventoryFactory.CreateInventory("ordinary", char.Parse("@"), maxDiscs),
+        InventoryFactory.CreateInventory("boring", char.Parse("@"), maxDiscs),
+        InventoryFactory.CreateInventory("magnet", char.Parse("@"), maxDiscs),
+        InventoryFactory.CreateInventory("exploding", char.Parse("@"), maxDiscs)
+      };
+      p2.Inventories = new List<Inventory>{
+        InventoryFactory.CreateInventory("ordinary", char.Parse("#"), maxDiscs),
+        InventoryFactory.CreateInventory("boring", char.Parse("#"), maxDiscs),
+        InventoryFactory.CreateInventory("magnet", char.Parse("#"), maxDiscs),
+        InventoryFactory.CreateInventory("exploding", char.Parse("#"), maxDiscs)
+      };
         }
 
         protected override void ConfigureRules()
@@ -63,7 +67,7 @@ namespace LineUpGame
                     'O' => "ordinary",
                     'B' => "boring",
                     'M' => "magnet",
-                    'E' => "explode",
+          'E' => "exploding",
                     _ => "ordinary"
                 };
 
