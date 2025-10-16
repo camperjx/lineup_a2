@@ -32,9 +32,6 @@ namespace LineUpGame
       return Math.Max(0, GetPerPlayer() - 6);
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // TEMPLATE METHOD - Defines the algorithm structure
-    // ═══════════════════════════════════════════════════════════
     public void Run()
     {
       SetupPlayers();
@@ -386,10 +383,6 @@ namespace LineUpGame
       return true;
     }
   }
-
-  // ═══════════════════════════════════════════════════════════
-  // CONCRETE GAME IMPLEMENTATIONS
-  // ═══════════════════════════════════════════════════════════
 
   class LineUpClassic : Game
   {
