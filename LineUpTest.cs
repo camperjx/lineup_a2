@@ -71,7 +71,7 @@ namespace LineUpGame
                     _ => "ordinary"
                 };
 
-                Disc d = current.CreateDisc(discType);
+                Disc d = DiscFactory.CreateDisc(discType, current.Symbol);
                 if (board.DropDisc(col, d))
                 {
                     current.Consume(discType);

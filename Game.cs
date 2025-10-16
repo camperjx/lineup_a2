@@ -143,7 +143,7 @@ namespace LineUpGame
           Console.WriteLine($"No {type} discs remaining.");
           return false;
         }
-        Disc disc = current.CreateDisc(type);
+        Disc disc = DiscFactory.CreateDisc(type, current.Symbol);
         SaveState();
         if (board.DropDisc(col!.Value, disc))
         {
@@ -167,7 +167,7 @@ namespace LineUpGame
           Console.WriteLine("No ordinary discs.");
           return false;
         }
-        Disc disc = current.CreateDisc(type);
+        Disc disc = DiscFactory.CreateDisc(type, current.Symbol);
         SaveState();
         if (board.DropDisc(col!.Value, disc))
         {
@@ -215,7 +215,7 @@ namespace LineUpGame
           char opponent = GetOpponentSymbol(current);
 
           int col = ai.ChooseColumn(grid, winN, opponent);
-          if (col >= 0 && board.DropDisc(col, ai.CreateDisc("ordinary")))
+          if (col >= 0 && board.DropDisc(col, DiscFactory.CreateDisc("ordinary", ai.Symbol)))
           {
             ai.Consume("ordinary");
           }

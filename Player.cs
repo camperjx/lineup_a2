@@ -34,14 +34,6 @@ namespace LineUpGame
       var inv = GetInventoryByType(type);
       return inv != null && inv.Count() > 0;
     }
-    // TODO: refactor to factory class
-    public Disc CreateDisc(string type) => type switch
-    {
-      "boring" => new BoringDisc(Symbol),
-      "magnet" => new MagnetDisc(Symbol),
-      "exploding" => new ExplodingDisc(Symbol),
-      _ => new OrdinaryDisc(Symbol)
-    };
     public void Consume(string type)
     {
       var inv = GetInventoryByType(type);
@@ -56,7 +48,7 @@ namespace LineUpGame
       var inv = GetInventoryBySymbol(ch);
       if (inv != null)
       {
-        inv.Increment(CreateDisc(inv.Type));
+        inv.Increment(DiscFactory.CreateDisc(inv.Type, Symbol));
       }
     }
 
@@ -149,7 +141,7 @@ namespace LineUpGame
       if (!HasDisc("ordinary")) return;
       var grid = board.ExportGrid();
       int col = ChooseColumn(grid, winN, opponent);
-      if (col >= 0 && board.DropDisc(col, CreateDisc("ordinary")))
+      if (col >= 0 && board.DropDisc(col, DiscFactory.CreateDisc("ordinary", Symbol)))
         Consume("ordinary");
     }
   }
