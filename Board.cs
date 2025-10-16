@@ -11,13 +11,19 @@ namespace LineUpGame
     public int Rows { get; private set; }
     public int Columns { get; private set; }
 
-    public Board(int rows, int cols)
+    public Board(int rows, int cols, bool validate = true)
     {
-      if (rows < 6 || cols < 7) throw new ArgumentException("Minimum board is 6x7.");
-      if (rows > cols) throw new ArgumentException("Rows cannot exceed columns.");
-      Rows = rows;
-      Columns = cols;
-      grid = new char[Rows, Columns];
+        if (validate)
+        {
+          if (rows < 6 || cols < 7)
+            throw new ArgumentException("Minimum board is 6x7.");
+
+          if (rows > cols) 
+            throw new ArgumentException("Rows cannot exceed columns.");
+        }
+        Rows = rows;
+        Columns = cols;
+        grid = new char[Rows, Columns];
       for (int r = 0; r < Rows; r++)
         for (int c = 0; c < Columns; c++)
           grid[r, c] = ' ';
@@ -142,23 +148,34 @@ namespace LineUpGame
 
     public string Serialize()
     {
-      var lines = new List<string>();
-      for (int r = 0; r < Rows; r++)
-      {
-        var row = "";
-        for (int c = 0; c < Columns; c++)
-          row += grid[r, c];
-        lines.Add(row);
-      }
-      return string.Join("\n", lines);
+
+        var sb = new System.Text.StringBuilder(Rows * (Columns + 1));
+        for (int r = 0; r < Rows; r++)
+        {
+            for (int c = 0; c < Columns; c++)
+                sb.Append(grid[r, c]);   
+            sb.Append('\n');
+        }
+        return sb.ToString();
     }
 
     public void Deserialize(string data)
     {
-      var lines = data.Split('\n');
-      for (int r = 0; r < Rows; r++)
-        for (int c = 0; c < Columns; c++)
-          grid[r, c] = lines[r][c];
+      if (data is null) throw new ArgumentNullException(nameof(data));
+
+        var lines = data.Split('\n');
+
+        for (int r = 0; r < Rows; r++)
+        {
+          string line = (r < lines.Length) ? lines[r] : string.Empty;
+
+          for (int c = 0; c < Columns; c++)
+          {
+              char ch = (c < line.Length) ? line[c] : ' ';
+              if (ch == '\r') ch = ' ';
+              grid[r, c] = ch;
+          }
+        }
     }
 
 

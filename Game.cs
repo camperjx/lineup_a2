@@ -43,6 +43,8 @@ namespace LineUpGame
       return new GameState
       {
         BoardData = board.Serialize(),
+        Rows = board.Rows, 
+        Cols = board.Columns,   
         P1Inventory = p1.Inventories.ToDictionary(inv => inv.Type, inv => inv.Count()),
         P2Inventory = p2.Inventories.ToDictionary(inv => inv.Type, inv => inv.Count()),
         CurrentPlayer = currentPlayer == p1 ? "P1" : "P2",
@@ -52,6 +54,8 @@ namespace LineUpGame
 
     private void RestoreState(GameState st)
     {
+      if (board.Rows != st.Rows || board.Columns != st.Cols)
+        board = new Board(st.Rows, st.Cols, validate: false);  
       board.Deserialize(st.BoardData);
       p1.Inventories.Clear();
       foreach (var kv in st.P1Inventory)
@@ -182,6 +186,7 @@ namespace LineUpGame
           int col = ai.ChooseColumn(grid, winN, opponent);
           if (col >= 0 && board.DropDisc(col, DiscFactory.CreateDisc("ordinary", ai.Symbol)))
           {
+            SaveState();
             ai.Consume("ordinary");
           }
         }
@@ -191,6 +196,13 @@ namespace LineUpGame
           Console.Write($"{currentPlayer.Name} ({currentPlayer.Symbol}): enter command: ");
           string? line = Console.ReadLine()?.Trim();
           if (string.IsNullOrWhiteSpace(line)) continue;
+
+          // Handle 'exit' to exit
+          if(line.Equals("exit"))
+          {
+            Console.WriteLine("Successful to exit");
+            return;
+          }
 
           // Handle 'help' command
           if (line.Equals("help", StringComparison.OrdinalIgnoreCase))
@@ -202,27 +214,39 @@ namespace LineUpGame
           // Handle undo
           if (line.Equals("undo", StringComparison.OrdinalIgnoreCase))
           {
-            var prev = history.Undo(CaptureCurrentState());
-            if (prev == null)
-            {
-              Console.WriteLine("No moves to undo.");
+              int steps = (playMode == "HvC") ? 2 : 1;
+
+              bool did = false;
+              for (int i = 0; i < steps; i++)
+              {
+                  if (history.undoStack.Count == 0) break;
+                  var prev = history.undoStack.Pop();
+                  history.redoStack.Push(CaptureCurrentState());
+                  RestoreState(prev);
+                  did = true;
+              }
+
+              Console.WriteLine(did ? "Undo successful." : "No moves to undo.");
               continue;
-            }
-            RestoreState(prev);
-            Console.WriteLine("Undo successful.");
           }
 
           // Handle redo
           if (line.Equals("redo", StringComparison.OrdinalIgnoreCase))
           {
-            var next = history.Redo(CaptureCurrentState());
-            if (next == null)
-            {
-              Console.WriteLine("No moves to redo.");
+              int steps = (playMode == "HvC") ? 2 : 1;
+
+              bool did = false;
+              for (int i = 0; i < steps; i++)
+              {
+                  if (history.redoStack.Count == 0) break;
+                  var next = history.redoStack.Pop();
+                  history.undoStack.Push(CaptureCurrentState());
+                  RestoreState(next);
+                  did = true;
+              }
+
+              Console.WriteLine(did ? "Redo successful." : "No moves to redo.");
               continue;
-            }
-            RestoreState(next);
-            Console.WriteLine("Redo successful.");
           }
 
           // Handle save
