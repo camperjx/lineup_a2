@@ -32,24 +32,6 @@ namespace LineUpGame
             return true;
         }
 
-        public void Display()
-        {
-            Console.WriteLine();
-            for (int r = 0; r < Rows; r++)
-            {
-                Console.Write("|");
-                for (int c = 0; c < Columns; c++)
-                {
-                    char ch = grid[r, c];
-                    Console.Write($" {(ch == ' ' ? ' ' : ch)} |");
-                }
-                Console.WriteLine();
-            }
-            Console.Write(" ");
-            for (int c = 0; c < Columns; c++) Console.Write($" {c}  ");
-            Console.WriteLine("\n");
-        }
-
         public bool DropDisc(int col, Disc disc)
         {
             if (!IsValidColumn(col)) return false;
@@ -179,14 +161,12 @@ namespace LineUpGame
                     grid[r, c] = lines[r][c];
         }
 
-
-
         public void ShowFrame(string message = "")
         {
-            Display();
+            BoardRenderer.Render(this);
             if (!string.IsNullOrEmpty(message))
                 Console.WriteLine(message);
-            System.Threading.Thread.Sleep(500); // 延迟0.5秒模拟动画帧
+            System.Threading.Thread.Sleep(500);
         }
 
 

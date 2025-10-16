@@ -49,7 +49,7 @@ namespace LineUpGame
             if (string.IsNullOrWhiteSpace(line)) return;
 
             var moves = line.Split(',', StringSplitOptions.RemoveEmptyEntries);
-            board.Display(); // Initial board display
+            BoardRenderer.Render(board);
 
             foreach (var move in moves)
             {
@@ -75,7 +75,7 @@ namespace LineUpGame
                 if (board.DropDisc(col, d))
                 {
                     current.Consume(discType);
-                    board.Display();
+                    BoardRenderer.Render(board);
 
                     if (board.CheckWin(current.Symbol, winCondition))
                     {

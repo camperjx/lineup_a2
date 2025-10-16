@@ -185,7 +185,7 @@ namespace LineUpGame
       turnCount = 0;
       while (!board.IsFull())
       {
-        board.Display();
+        BoardRenderer.Render(board);
         Console.WriteLine($"Win if you connect {winCondition}.");
 
         string s = "Inv P1(O/B/M/E): ";
@@ -283,7 +283,7 @@ namespace LineUpGame
         // Check for win after move
         if (board.CheckWin(current.Symbol, winCondition))
         {
-          board.Display();
+          BoardRenderer.Render(board);
           Console.WriteLine($"{current.Name} wins!");
           return;
         }
@@ -301,7 +301,7 @@ namespace LineUpGame
         current = (current == p1) ? p2 : p1;
       }
 
-      board.Display();
+      BoardRenderer.Render(board);
       Console.WriteLine("Board full. It's a tie.");
     }
 
