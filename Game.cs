@@ -458,12 +458,14 @@ namespace LineUpGame
 
   class LineUpSpin : Game
   {
-    private const int ROWS = 8;
-    private const int COLS = 9;
-
+    public LineUpSpin()
+    {
+      rows = 8;
+      cols = 9;
+    }
     protected override void ConfigureBoard()
     {
-      board = new Board(ROWS, COLS);
+      board = new Board(rows, cols);
     }
 
     protected override void ConfigureInventory()
@@ -478,7 +480,7 @@ namespace LineUpGame
 
     protected override void ConfigureRules()
     {
-      winCondition = Math.Max(4, (int)Math.Floor(ROWS * COLS * 0.1));
+      winCondition = Math.Max(4, (int)Math.Floor(rows * cols * 0.1));
     }
 
     protected override bool UseOnlyOrdinary() => true;
