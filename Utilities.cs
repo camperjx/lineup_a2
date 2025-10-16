@@ -5,7 +5,7 @@ public static class Utilities
     Console.WriteLine();
     Console.WriteLine("=== Help Menu (Main Menu) ===");
     Console.WriteLine("In-game commands:");
-    Console.WriteLine("  move <col> <ordinary|boring|magnet|explode>");
+    Console.WriteLine("  move <col> <ordinary|boring|magnet|exploding>");
     Console.WriteLine("     e.g., move 2 magnet");
     Console.WriteLine("  <col>            Quick ordinary drop (e.g., 3)");
     Console.WriteLine("  save <filename>  Save current game");

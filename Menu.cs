@@ -52,7 +52,7 @@ public class HelpMenu : Menu
     Items.Add(new MenuItem("o", "Ordinary Disc"));
     Items.Add(new MenuItem("b", "Boring Disc"));
     Items.Add(new MenuItem("m", "Magnet Disc"));
-    Items.Add(new MenuItem("e", "Explode Disc"));
+    Items.Add(new MenuItem("e", "Exploding Disc"));
     Items.Add(new MenuItem("", ""));
     Items.Add(new MenuItem("", "In-game commands:"));
     Items.Add(new MenuItem($"{"Default move (ordinary disc)",-32}", "<col> (e.g., 2)"));
