@@ -11,10 +11,16 @@ namespace LineUpGame
         public int Rows { get; private set; }
         public int Columns { get; private set; }
 
-        public Board(int rows, int cols)
+        public Board(int rows, int cols, bool validate = true)
         {
-            if (rows < 6 || cols < 7) throw new ArgumentException("Minimum board is 6x7.");
-            if (rows > cols) throw new ArgumentException("Rows cannot exceed columns.");
+            if (validate)
+            {
+                if (rows < 6 || cols < 7)
+                    throw new ArgumentException("Minimum board is 6x7.");
+                
+                if (rows > cols) 
+                    throw new ArgumentException("Rows cannot exceed columns.");
+            }
             Rows = rows;
             Columns = cols;
             grid = new char[Rows, Columns];
@@ -160,23 +166,34 @@ namespace LineUpGame
 
         public string Serialize()
         {
-            var lines = new List<string>();
+
+            var sb = new System.Text.StringBuilder(Rows * (Columns + 1));
             for (int r = 0; r < Rows; r++)
             {
-                var row = "";
                 for (int c = 0; c < Columns; c++)
-                    row += grid[r, c];
-                lines.Add(row);
+                    sb.Append(grid[r, c]);   
+                sb.Append('\n');
             }
-            return string.Join("\n", lines);
+            return sb.ToString();
         }
 
         public void Deserialize(string data)
         {
+            if (data is null) throw new ArgumentNullException(nameof(data));
+
             var lines = data.Split('\n');
+
             for (int r = 0; r < Rows; r++)
+            {
+                string line = (r < lines.Length) ? lines[r] : string.Empty;
+
                 for (int c = 0; c < Columns; c++)
-                    grid[r, c] = lines[r][c];
+                {
+                    char ch = (c < line.Length) ? line[c] : ' ';
+                    if (ch == '\r') ch = ' ';
+                    grid[r, c] = ch;
+                }
+            }
         }
 
 
@@ -186,7 +203,7 @@ namespace LineUpGame
             Display();
             if (!string.IsNullOrEmpty(message))
                 Console.WriteLine(message);
-            System.Threading.Thread.Sleep(500); // 延迟0.5秒模拟动画帧
+            System.Threading.Thread.Sleep(500); 
         }
 
 
