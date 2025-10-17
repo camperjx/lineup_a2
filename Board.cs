@@ -178,51 +178,6 @@ namespace LineUpGame
         }
     }
 
-
-    private void ApplyMagnetEffect(int row, int col, Disc disc)
-    {
-      // effect starts
-      Decorator.Render(new Parameters(this, "Effect activated (Magnet)", 500));
-
-      char ownerOrd = char.IsUpper(disc.Symbol) ? '@' : '#';
-
-      // Search the discs around
-      int target = -1;
-      for (int r = row + 1; r < Rows; r++)
-      {
-        if (grid[r, col] == ownerOrd) { target = r; break; }
-      }
-
-      // If there is none nearby, move upward one row
-      if (target != -1 && target > row + 1)
-      {
-        grid[target - 1, col] = ownerOrd;
-        grid[target, col] = ' ';
-      }
-
-      // Magnet become ordinary
-      grid[row, col] = ownerOrd;
-
-      // Final state
-      Decorator.Render(new Parameters(this, "Final state (Magnet)", 500));
-    }
-    private void ApplyMagnetEffect(int row, int col, char placedToken)
-    {
-      Decorator.Render(new Parameters(this, "Effect activated (Magnet)", 500));
-      char ownerOrd = char.IsUpper(placedToken) ? '@' : '#';
-      int target = -1;
-      for (int r = row + 1; r < Rows; r++)
-      {
-        if (grid[r, col] == ownerOrd) { target = r; break; }
-      }
-      if (target != -1 && target > row + 1)
-      {
-        grid[target - 1, col] = ownerOrd;
-        grid[target, col] = ' ';
-      }
-      grid[row, col] = ownerOrd;
-      Decorator.Render(new Parameters(this, "Final state (Magnet)", 500));
-    }
     public char[,] ExportGrid()
     {
       var copy = new char[Rows, Columns];
