@@ -7,6 +7,7 @@ namespace LineUpGame
     [SetsRequiredMembers]
     public LineUpTest()
     {
+      playMode = "HvH"; 
       history = new History();
       board = new Board(6, 7);
       p1 = new HumanPlayer('@', "Player1");
