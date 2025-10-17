@@ -2,7 +2,7 @@ using System;
 
 namespace LineUpGame
 {
-    abstract class Disc
+    public abstract class Disc
     {
         public char OwnerOrdinary { get; }
         protected bool IsP1 => OwnerOrdinary == '@';
@@ -27,17 +27,17 @@ namespace LineUpGame
         public override void Apply(Board board, int r, int c)
         {
             // 1. Initially drop on the board
-            board.ShowFrame("Initial placement (Boring)");
+            Decorator.Render(new Parameters(board, "Initial placement (Boring)", 500));
 
             // 2. Activate effect
-            board.ShowFrame("Effect activated (Boring)");
+            Decorator.Render(new Parameters(board, "Effect activated (Boring)", 500));
 
             var returned = board.ClearColumnAndReturn(c);
             foreach (var ch in returned) GameRegistry.ReturnToOwner(ch);
             board.SetCell(board.Rows - 1, c, OwnerOrdinary);
 
             // 3. Final state
-            board.ShowFrame("Final state (Boring)");
+            Decorator.Render(new Parameters(board, "Final state (Boring)", 500));
         }
     }
 
@@ -48,15 +48,15 @@ namespace LineUpGame
 
         public override void Apply(Board board, int r, int c)
         {
-            board.ShowFrame("Initial placement (Magnet)");
+            Decorator.Render(new Parameters(board, "Initial placement (Magnet)", 500));
 
-            board.ShowFrame("Effect activated (Magnet)");
+            Decorator.Render(new Parameters(board, "Effect activated (Magnet)", 500));
 
             int r1 = r + 1, r2 = r + 2;
-            if (r2 < board.Rows)                
+            if (r2 < board.Rows)
             {
-                char a = board.GetCell(r1, c);  
-                char b = board.GetCell(r2, c); 
+                char a = board.GetCell(r1, c);
+                char b = board.GetCell(r2, c);
 
                 board.SetCell(r1, c, b);
                 board.SetCell(r2, c, a);
@@ -64,7 +64,7 @@ namespace LineUpGame
 
             board.SetCell(r, c, OwnerOrdinary);
 
-            board.ShowFrame("Final state (Magnet)");
+            Decorator.Render(new Parameters(board, "Final state (Magnet)", 500));
         }
     }
 
@@ -76,10 +76,10 @@ namespace LineUpGame
         public override void Apply(Board board, int r, int c)
         {
             // 1. Initially drop on the board
-            board.ShowFrame("Initial placement (Exploding)");
+            Decorator.Render(new Parameters(board, "Initial placement (Exploding)", 500));
 
             // 2. Activate effect
-            board.ShowFrame("Effect activated (Exploding)");
+            Decorator.Render(new Parameters(board, "Effect activated (Exploding)", 500));
 
             for (int dr = -1; dr <= 1; dr++)
                 for (int dc = -1; dc <= 1; dc++)
@@ -91,7 +91,7 @@ namespace LineUpGame
             board.ApplyGravity();
 
             // 3. Final state
-            board.ShowFrame("Final state (Exploding)");
+            Decorator.Render(new Parameters(board, "Final state (Exploding)", 500));
         }
     }
 }

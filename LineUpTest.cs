@@ -1,93 +1,81 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace LineUpGame
 {
-    class LineUpTest : Game
+  class LineUpTest : Game
+  {
+    [SetsRequiredMembers]
+    public LineUpTest()
     {
-        private const int ROWS = 6;
-        private const int COLS = 7;
-
-        protected override void ConfigureBoard()
-        {
-            board = new Board(ROWS, COLS);
-        }
-
-        protected override void ConfigureInventory()
-        {
-            // Unlimited inventory for testing
-            int maxDiscs = ROWS * COLS;
-            p1.Inventory["ordinary"] = maxDiscs;
-            p2.Inventory["ordinary"] = maxDiscs;
-            p1.Inventory["boring"] = maxDiscs;
-            p1.Inventory["magnet"] = maxDiscs;
-            p1.Inventory["explode"] = maxDiscs;
-            p2.Inventory["boring"] = maxDiscs;
-            p2.Inventory["magnet"] = maxDiscs;
-            p2.Inventory["explode"] = maxDiscs;
-        }
-
-        protected override void ConfigureRules()
-        {
-            winCondition = 4;
-        }
-
-        protected override bool UseOnlyOrdinary() => false;
-        protected override bool EnableSpin() => false;
-
-        // Override Run() to execute scripted test sequence
-        public new void Run()
-        {
-            SetupPlayers();
-            ConfigureBoard();
-            ConfigureInventory();
-            ConfigureRules();
-
-            Console.WriteLine("Enter test sequence (e.g., O4,M5,B2,O6):");
-            string? line = Console.ReadLine();
-            if (string.IsNullOrWhiteSpace(line)) return;
-
-            var moves = line.Split(',', StringSplitOptions.RemoveEmptyEntries);
-            board.Display(); // Initial board display
-
-            foreach (var move in moves)
-            {
-                string trimmed = move.Trim();
-                if (trimmed.Length < 2) continue;
-
-                char typeChar = char.ToUpper(trimmed[0]);
-                if (!int.TryParse(trimmed.Substring(1), out int col)) continue;
-
-                // Convert from 1-based to 0-based column index
-                col -= 1;
-
-                string discType = typeChar switch
-                {
-                    'O' => "ordinary",
-                    'B' => "boring",
-                    'M' => "magnet",
-                    'E' => "explode",
-                    _ => "ordinary"
-                };
-
-                Disc d = current.CreateDisc(discType);
-                if (board.DropDisc(col, d))
-                {
-                    current.Consume(discType);
-                    board.Display();
-
-                    if (board.CheckWin(current.Symbol, winCondition))
-                    {
-                        Console.WriteLine($"{current.Name} wins!");
-                        return;
-                    }
-
-                    current = (current == p1) ? p2 : p1;
-                }
-                else
-                {
-                    Console.WriteLine($"Invalid move or column full: {trimmed}");
-                }
-            }
-
-            Console.WriteLine("Test sequence complete.");
-        }
+      history = new History();
+      board = new Board(6, 7);
+      p1 = new HumanPlayer('@', "Player1");
+      p2 = playMode == "HvC" ? new AIPlayer('#', "Computer") : new HumanPlayer('#', "Player2");
+      p1.Inventories = new List<Inventory>{
+        InventoryFactory.CreateInventory("ordinary", char.Parse("@"), 42),
+        InventoryFactory.CreateInventory("boring", char.Parse("@"), 42),
+        InventoryFactory.CreateInventory("magnet", char.Parse("@"), 42),
+        InventoryFactory.CreateInventory("exploding", char.Parse("@"), 42)
+      };
+      p2.Inventories = new List<Inventory>{
+        InventoryFactory.CreateInventory("ordinary", char.Parse("#"), 42),
+        InventoryFactory.CreateInventory("boring", char.Parse("#"), 42),
+        InventoryFactory.CreateInventory("magnet", char.Parse("#"), 42),
+        InventoryFactory.CreateInventory("exploding", char.Parse("#"), 42)
+      };
+      currentPlayer = p1;
+      winCondition = 4;
     }
+    public void TrunLoop()
+    {
+      Console.WriteLine("Enter test sequence (e.g., O4,M5,B2,O6):");
+      string? line = Console.ReadLine();
+      if (string.IsNullOrWhiteSpace(line)) return;
+
+      var moves = line.Split(',', StringSplitOptions.RemoveEmptyEntries);
+      BoardRenderer.Render(board);
+
+      foreach (var move in moves)
+      {
+        string trimmed = move.Trim();
+        if (trimmed.Length < 2) continue;
+
+        char typeChar = char.ToUpper(trimmed[0]);
+        if (!int.TryParse(trimmed.Substring(1), out int col)) continue;
+
+        // Convert from 1-based to 0-based column index
+        col -= 1;
+
+        string discType = typeChar switch
+        {
+          'O' => "ordinary",
+          'B' => "boring",
+          'M' => "magnet",
+          'E' => "exploding",
+          _ => "ordinary"
+        };
+
+        Disc d = DiscFactory.CreateDisc(discType, currentPlayer.Symbol);
+        if (board.DropDisc(col, d))
+        {
+          currentPlayer.Consume(discType);
+          BoardRenderer.Render(board);
+
+          if (board.CheckWin(currentPlayer.Symbol, winCondition))
+          {
+            Console.WriteLine($"{currentPlayer.Name} wins!");
+            return;
+          }
+
+          currentPlayer = (currentPlayer == p1) ? p2 : p1;
+        }
+        else
+        {
+          Console.WriteLine($"Invalid move or column full: {trimmed}");
+        }
+      }
+
+      Console.WriteLine("Test sequence complete.");
+    }
+  }
 }

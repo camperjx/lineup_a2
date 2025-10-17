@@ -4,143 +4,149 @@ using System.Collections.Generic;
 
 namespace LineUpGame
 {
-    class Player
+  public class Player
+  {
+    public char Symbol { get; }
+    public string Name { get; }
+
+    public List<Inventory> Inventories { get; set; } = new();
+
+    public Player(char symbol, string name) { Symbol = symbol; Name = name; }
+
+    public Inventory? GetInventoryByType(string type)
     {
-        public char Symbol { get; }
-        public string Name { get; }
-        public Dictionary<string, int> Inventory { get; } = new()
-        {
-            {"ordinary", 0},
-            {"boring", 2},
-            {"magnet", 2},
-            {"explode", 2},
-        };
-
-        public Player(char symbol, string name) { Symbol = symbol; Name = name; }
-
-        public void ResetDefaultInventory()
-        {
-            Inventory["boring"] = 2;
-            Inventory["magnet"] = 2;
-            Inventory["explode"] = 2;
-        }
-
-        public bool HasDisc(string type) => Inventory.TryGetValue(type, out var n) && n > 0;
-        public Disc CreateDisc(string type) => type switch
-        {
-            "boring" => new BoringDisc(Symbol),
-            "magnet" => new MagnetDisc(Symbol),
-            "explode" => new ExplodingDisc(Symbol),
-            _ => new OrdinaryDisc(Symbol)
-        };
-        public void Consume(string type) { if (Inventory.ContainsKey(type)) Inventory[type]--; }
-
-        public void ReturnFromChar(char ch)
-        {
-            switch (ch)
-            {
-                case '@': case '#': Inventory["ordinary"]++; break;
-                case 'B': case 'b': Inventory["boring"]++; break;
-                case 'M': case 'm': Inventory["magnet"]++; break;
-                case 'E': case 'e': Inventory["explode"]++; break;
-            }
-        }
-
-        public override string ToString() => Name;
+      return Inventories.Find(i => i.Type == type);
     }
-        public interface IAIPolicy
+
+    public Inventory? GetInventoryBySymbol(char symbol)
     {
-        int ChooseColumn(char[,] grid, int winN, char self, char opponent, Random rng);
+      return Inventories.Find(i => char.ToUpper(i.Symbol) == char.ToUpper(symbol));
     }
-    public sealed class WinBlockCenterPolicy : IAIPolicy
+
+    public void ResetInventory(Inventory inv, int Count)
     {
-        public bool CenterBias { get; init; } = true;
-        public int StrongMinEmpty { get; init; } = 0; 
-
-        public int ChooseColumn(char[,] grid, int winN, char self, char opponent, Random rng)
-        {
-            int cols = grid.GetLength(1);
-            for (int c = 0; c < cols; c++)
-                if (SimWin(grid, c, self, winN)) return c;
-
-            for (int c = 0; c < cols; c++)
-                if (SimWin(grid, c, opponent, winN)) return c;
-
-            var candidates = new List<(int col, double dist)>();
-            double center = (cols - 1) / 2.0;
-            for (int c = 0; c < cols; c++)
-                if (Board.CanDropOnGrid(grid, c))
-                    candidates.Add((c, Math.Abs(c - center)));
-
-            if (candidates.Count == 0) return -1;
-
-            var strong = new List<(int col, double dist)>();
-            foreach (var it in candidates)
-                if (RemainingEmptySlots(grid, it.col) >= winN) strong.Add(it);
-
-            int PickByCenter(List<(int col, double dist)> list)
-            {
-                double best = double.MaxValue;
-                var bestCols = new List<int>();
-                foreach (var (col, dist) in list)
-                {
-                    if (dist < best - 1e-9) { best = dist; bestCols.Clear(); bestCols.Add(col); }
-                    else if (Math.Abs(dist - best) <= 1e-9) { bestCols.Add(col); }
-                }
-                return bestCols[rng.Next(bestCols.Count)];
-            }
-
-            return (strong.Count > 0) ? PickByCenter(strong) : PickByCenter(candidates);
-        }
-        private static bool SimWin(char[,] grid, int col, char sym, int winN)
-        {
-            if (!Board.CanDropOnGrid(grid, col)) return false;
-            int row = Board.FindDropRowOnGrid(grid, col);
-            if (row < 0) return false;
-
-            grid[row, col] = sym;
-            bool win = Board.CheckWinOnGrid(grid, row, col, winN, sym);
-            grid[row, col] = ' ';
-            return win;
-        }
-        private static int RemainingEmptySlots(char[,] grid, int col)
-        {
-            int rows = grid.GetLength(0);
-            int count = 0;
-            for (int r = 0; r < rows; r++)
-            {
-                if (grid[r, col] == ' ') count++;
-                else break;
-            }
-            return count;
-        }
+      inv.Clear();
+      InventoryFactory.CreateInventory(inv.Type, inv.Symbol, Count);
     }
-    class AIPlayer : Player
+
+    public bool HasDisc(string type)
     {
-        private readonly Random rng;
-        private readonly IAIPolicy policy;
-
-        public AIPlayer(char symbol, string name, Random? random = null, IAIPolicy? policy = null)
-            : base(symbol, name)
-        {
-            rng = random ?? new Random();
-            this.policy = policy ?? new WinBlockCenterPolicy();
-        }
-
-        public int ChooseColumn(char[,] grid, int winN, char opponent)
-            => policy.ChooseColumn(grid, winN, this.Symbol, opponent, rng);
-
-        public void MakeMove(Board board, int winN, char opponent)
-        {
-            if (!HasDisc("ordinary")) return;
-            var grid = board.ExportGrid();
-            int col = ChooseColumn(grid, winN, opponent);
-            if (col >= 0 && board.DropDisc(col, CreateDisc("ordinary")))
-                Consume("ordinary");
-        }
+      var inv = GetInventoryByType(type);
+      return inv != null && inv.Count() > 0;
     }
-    class HumanPlayer : Player
+    public void Consume(string type)
     {
-        public HumanPlayer(char symbol, string name) : base(symbol, name) { }
+      var inv = GetInventoryByType(type);
+      if (inv != null)
+      {
+        inv.Decrement();
+      }
     }
+
+    public void ReturnFromChar(char ch)
+    {
+      var inv = GetInventoryBySymbol(ch);
+      if (inv != null)
+      {
+        inv.Increment(DiscFactory.CreateDisc(inv.Type, Symbol));
+      }
+    }
+
+    public override string ToString() => Name;
+  }
+  public interface IAIPolicy
+  {
+    int ChooseColumn(char[,] grid, int winN, char self, char opponent, Random rng);
+  }
+  public sealed class WinBlockCenterPolicy : IAIPolicy
+  {
+    public bool CenterBias { get; init; } = true;
+    public int StrongMinEmpty { get; init; } = 0;
+
+    public int ChooseColumn(char[,] grid, int winN, char self, char opponent, Random rng)
+    {
+      int cols = grid.GetLength(1);
+      for (int c = 0; c < cols; c++)
+        if (SimWin(grid, c, self, winN)) return c;
+
+      for (int c = 0; c < cols; c++)
+        if (SimWin(grid, c, opponent, winN)) return c;
+
+      var candidates = new List<(int col, double dist)>();
+      double center = (cols - 1) / 2.0;
+      for (int c = 0; c < cols; c++)
+        if (Board.CanDropOnGrid(grid, c))
+          candidates.Add((c, Math.Abs(c - center)));
+
+      if (candidates.Count == 0) return -1;
+
+      var strong = new List<(int col, double dist)>();
+      foreach (var it in candidates)
+        if (RemainingEmptySlots(grid, it.col) >= winN) strong.Add(it);
+
+      int PickByCenter(List<(int col, double dist)> list)
+      {
+        double best = double.MaxValue;
+        var bestCols = new List<int>();
+        foreach (var (col, dist) in list)
+        {
+          if (dist < best - 1e-9) { best = dist; bestCols.Clear(); bestCols.Add(col); }
+          else if (Math.Abs(dist - best) <= 1e-9) { bestCols.Add(col); }
+        }
+        return bestCols[rng.Next(bestCols.Count)];
+      }
+
+      return (strong.Count > 0) ? PickByCenter(strong) : PickByCenter(candidates);
+    }
+    private static bool SimWin(char[,] grid, int col, char sym, int winN)
+    {
+      if (!Board.CanDropOnGrid(grid, col)) return false;
+      int row = Board.FindDropRowOnGrid(grid, col);
+      if (row < 0) return false;
+
+      grid[row, col] = sym;
+      bool win = Board.CheckWinOnGrid(grid, row, col, winN, sym);
+      grid[row, col] = ' ';
+      return win;
+    }
+    private static int RemainingEmptySlots(char[,] grid, int col)
+    {
+      int rows = grid.GetLength(0);
+      int count = 0;
+      for (int r = 0; r < rows; r++)
+      {
+        if (grid[r, col] == ' ') count++;
+        else break;
+      }
+      return count;
+    }
+  }
+  class AIPlayer : Player
+  {
+    private readonly Random rng;
+    private readonly IAIPolicy policy;
+
+    public AIPlayer(char symbol, string name, Random? random = null, IAIPolicy? policy = null)
+        : base(symbol, name)
+    {
+      rng = random ?? new Random();
+      this.policy = policy ?? new WinBlockCenterPolicy();
+    }
+
+    public int ChooseColumn(char[,] grid, int winN, char opponent)
+        => policy.ChooseColumn(grid, winN, this.Symbol, opponent, rng);
+
+    public void MakeMove(Board board, int winN, char opponent)
+    {
+      if (!HasDisc("ordinary")) return;
+      var grid = board.ExportGrid();
+      int col = ChooseColumn(grid, winN, opponent);
+      if (col >= 0 && board.DropDisc(col, DiscFactory.CreateDisc("ordinary", Symbol)))
+        Consume("ordinary");
+    }
+  }
+  class HumanPlayer : Player
+  {
+    public HumanPlayer(char symbol, string name) : base(symbol, name) { }
+  }
 }
