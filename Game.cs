@@ -43,8 +43,8 @@ namespace LineUpGame
       return new GameState
       {
         BoardData = board.Serialize(),
-        Rows = board.Rows, 
-        Cols = board.Columns,   
+        Rows = board.Rows,
+        Cols = board.Columns,
         P1Inventory = p1.Inventories.ToDictionary(inv => inv.Type, inv => inv.Count()),
         P2Inventory = p2.Inventories.ToDictionary(inv => inv.Type, inv => inv.Count()),
         CurrentPlayer = currentPlayer == p1 ? "P1" : "P2",
@@ -55,7 +55,7 @@ namespace LineUpGame
     private void RestoreState(GameState st)
     {
       if (board.Rows != st.Rows || board.Columns != st.Cols)
-        board = new Board(st.Rows, st.Cols, validate: false);  
+        board = new Board(st.Rows, st.Cols, validate: false);
       board.Deserialize(st.BoardData);
       p1.Inventories.Clear();
       foreach (var kv in st.P1Inventory)
@@ -103,10 +103,22 @@ namespace LineUpGame
           Console.WriteLine("Invalid disc type.");
           return false;
         }
-        if (ordinaryOnly)
+        if (type == "")
         {
-          type = "ordinary";
+          Console.WriteLine("Invalid disc type.");
+          return false;
         }
+
+        // NEW CODE: Reject special discs in ordinary-only modes
+        if (ordinaryOnly && type != "ordinary")
+        {
+          Console.WriteLine("Special discs are not available in this game mode. Use ordinary discs only.");
+          return false;
+        }
+        // if (ordinaryOnly)
+        // {
+        //   type = "ordinary";
+        // }
         if (!currentPlayer.HasDisc(type))
         {
           Console.WriteLine($"No {type} discs remaining.");
@@ -198,7 +210,7 @@ namespace LineUpGame
           if (string.IsNullOrWhiteSpace(line)) continue;
 
           // Handle 'exit' to exit
-          if(line.Equals("exit"))
+          if (line.Equals("exit"))
           {
             Console.WriteLine("Successful to exit");
             return;
@@ -214,39 +226,39 @@ namespace LineUpGame
           // Handle undo
           if (line.Equals("undo", StringComparison.OrdinalIgnoreCase))
           {
-              int steps = (playMode == "HvC") ? 2 : 1;
+            int steps = (playMode == "HvC") ? 2 : 1;
 
-              bool did = false;
-              for (int i = 0; i < steps; i++)
-              {
-                  if (history.undoStack.Count == 0) break;
-                  var prev = history.undoStack.Pop();
-                  history.redoStack.Push(CaptureCurrentState());
-                  RestoreState(prev);
-                  did = true;
-              }
+            bool did = false;
+            for (int i = 0; i < steps; i++)
+            {
+              if (history.undoStack.Count == 0) break;
+              var prev = history.undoStack.Pop();
+              history.redoStack.Push(CaptureCurrentState());
+              RestoreState(prev);
+              did = true;
+            }
 
-              Console.WriteLine(did ? "Undo successful." : "No moves to undo.");
-              continue;
+            Console.WriteLine(did ? "Undo successful." : "No moves to undo.");
+            continue;
           }
 
           // Handle redo
           if (line.Equals("redo", StringComparison.OrdinalIgnoreCase))
           {
-              int steps = (playMode == "HvC") ? 2 : 1;
+            int steps = (playMode == "HvC") ? 2 : 1;
 
-              bool did = false;
-              for (int i = 0; i < steps; i++)
-              {
-                  if (history.redoStack.Count == 0) break;
-                  var next = history.redoStack.Pop();
-                  history.undoStack.Push(CaptureCurrentState());
-                  RestoreState(next);
-                  did = true;
-              }
+            bool did = false;
+            for (int i = 0; i < steps; i++)
+            {
+              if (history.redoStack.Count == 0) break;
+              var next = history.redoStack.Pop();
+              history.undoStack.Push(CaptureCurrentState());
+              RestoreState(next);
+              did = true;
+            }
 
-              Console.WriteLine(did ? "Redo successful." : "No moves to redo.");
-              continue;
+            Console.WriteLine(did ? "Redo successful." : "No moves to redo.");
+            continue;
           }
 
           // Handle save
